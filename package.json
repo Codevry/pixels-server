@@ -1,8 +1,13 @@
 {
   "name": "pixels-server",
-  "module": "index.ts",
+  "description": "image processing & caching service",
+  "version": "0.1.0",
+  "module": "server/index.ts",
   "type": "module",
   "private": true,
+  "scripts": {
+    "dev": "bun --hot index.ts"
+  },
   "dependencies": {
     "blurhash": "^2.0.5",
     "hono": "^4.5.11",
