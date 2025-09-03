@@ -1,11 +1,13 @@
-import {Hono} from "hono";
-import {version} from "@/package.json"
-import {logger} from "hono/logger";
+import { Hono } from "hono";
+import { version } from "@/package.json";
+import { logger } from "hono/logger";
+import { DbRedis } from "@/services/dbRedis.ts";
+import Globals from "@/utils/globals.ts";
 
 export default class Router {
-    private readonly app: Hono
+    private readonly app: Hono;
     constructor() {
-        this.app = new Hono()
+        this.app = new Hono();
     }
 
     /**
@@ -39,9 +41,25 @@ export default class Router {
     }
 
     /**
+     * connect to database & services
+     * @private
+     */
+    private async database() {
+        Globals.dbRedis = new DbRedis();
+        await Globals.dbRedis
+            .connect()
+            .then(() => console.log("connected to redis"))
+            .catch((err) => {
+                console.error(err);
+                process.exit(1);
+            });
+    }
+
+    /**
      * setup & return
      */
     async connect() {
+        await this.database();
         this.middlewares();
         this.routes();
         return this.app;
