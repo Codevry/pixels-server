@@ -11,7 +11,11 @@
   "dependencies": {
     "blurhash": "^2.0.5",
     "hono": "^4.5.11",
+    "ioredis": "^5.7.0",
     "nanoid": "^5.0.7",
     "sharp": "^0.33.5"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2"
   }
 }
