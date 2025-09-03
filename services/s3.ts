@@ -1,23 +1,17 @@
 import { S3Client } from "@aws-sdk/client-s3";
+import type { TypeStorageS3Config } from "@/types/typeStorage.ts";
 
-export type S3Config = {
-    bucket: string;
-    endpoint: string;
-    accessKey: string;
-    secretKey: string;
-    prefix: string;
-    region: string;
-};
+export type TypeS3Manager = Record<string, S3Manager>;
 
 export class S3Manager {
     private readonly client: S3Client;
-    private config: S3Config;
+    private config: TypeStorageS3Config;
 
     /**
      * Creates an instance of S3Manager
-     * @param {S3Config} config - The configuration object for S3
+     * @param {TypeStorageS3Config} config - The configuration object for S3
      */
-    constructor(config: S3Config) {
+    constructor(config: TypeStorageS3Config) {
         this.config = config;
         this.client = new S3Client({
             ...config,
