@@ -9,6 +9,7 @@
     "dev": "bun --hot index.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.879.0",
     "blurhash": "^2.0.5",
     "hono": "^4.5.11",
     "ioredis": "^5.7.0",
