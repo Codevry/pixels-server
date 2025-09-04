@@ -23,6 +23,7 @@ const FtpConfigSchema = z.object({
     privateKey: z.string().optional(),
     passphrase: z.string().optional(),
     remoteDir: z.string().optional(),
+    cachePath: z.string().optional(),
 });
 
 /**
@@ -36,6 +37,7 @@ const StorageS3ConfigSchema = z.object({
     secretKey: z.string(),
     prefix: z.string(),
     region: z.string(),
+    cachePath: z.string().optional(),
 });
 
 /**
