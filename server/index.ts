@@ -10,9 +10,7 @@ import { logger } from "hono/logger";
 import { DbRedis } from "@/services/dbRedis.ts";
 import Globals from "@/utils/globals.ts";
 import validateConfig from "@/utils/validateConfig.ts";
-import S3Manager from "@/services/s3.ts";
-import FtpManager from "@/services/ftp.ts"; // Assuming FtpManager exists
-import { ENUM_STORAGE_TYPE } from "@/utils/enums.ts";
+import { StorageManager } from "@/services/storageManager.ts"; // New import
 
 /**
  * Router class that handles the setup and initialization of the Hono application.
@@ -57,41 +55,15 @@ export default class Router {
      * @throws {Error} Will exit a process with status 1 if storage configuration is invalid
      */
     private async setStorageManager() {
+        Globals.storage = {} as Record<string, StorageManager>; // Initialize Globals.storage
         for (const [storageName, storageConfig] of Object.entries(
             Globals.config.storage
         )) {
-            switch (storageConfig.type) {
-                // s3 type
-                case ENUM_STORAGE_TYPE.s3:
-                    Globals.storage[storageName] = new S3Manager(
-                        storageConfig.s3!
-                    );
-                    break;
-
-                // ftp type
-                case ENUM_STORAGE_TYPE.ftp:
-                    Globals.storage[storageName] = new FtpManager(
-                        storageConfig.ftp!,
-                        ENUM_STORAGE_TYPE.ftp
-                    );
-                    break;
-
-                // sftp type
-                case ENUM_STORAGE_TYPE.sftp:
-                    Globals.storage[storageName] = new FtpManager(
-                        storageConfig.ftp!,
-                        ENUM_STORAGE_TYPE.sftp
-                    );
-                    break;
-
-                // local storage
-                case ENUM_STORAGE_TYPE.local:
-                    // Local storage might not need a manager class, or it could be a simple path
-                    // For now, we'll just log a message. Implement as needed.
-                    console.log(
-                        `Local storage configured for: ${storageName}. Manager not implemented yet.`
-                    );
-                    break;
+            try {
+                Globals.storage[storageName] = new StorageManager(storageConfig);
+            } catch (error) {
+                console.error(`Failed to initialize storage manager for ${storageName}:`, error);
+                process.exit(1);
             }
         }
         console.log("Storage managers initialized.");
@@ -156,7 +128,7 @@ export default class Router {
      *
      * @returns {Promise<Hono>} The configured Hono application instance
      */
-    async connect() {
+    async connect(): Promise<Hono> {
         await this.verifyConfig(); // Verify config as the first step
         await this.database();
         await this.setStorageManager(); // Initialize storage managers
