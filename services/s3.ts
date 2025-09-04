@@ -78,14 +78,13 @@ export default class S3Manager {
 
     /**
      * Deletes a file from S3.
-     * @param {string} bucket - The name of the S3 bucket.
      * @param {string} key - The key (path) of the file in the bucket.
      * @returns {Promise<any>} - The result of the delete operation.
      */
-    public async deleteFile(bucket: string, key: string): Promise<any> {
+    public async deleteFile(key: string): Promise<any> {
         try {
             const command = new DeleteObjectCommand({
-                Bucket: bucket,
+                Bucket: this.config.bucket,
                 Key: key,
             });
             return await this.client.send(command);
