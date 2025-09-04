@@ -8,9 +8,7 @@ import {
 import type { TypeStorageS3Config } from "@/types/typeStorage.ts";
 import { ErrorObject } from "@/utils/errorObject.ts";
 
-export type TypeS3Manager = Record<string, S3Manager>;
-
-export class S3Manager {
+export default class S3Manager {
     private readonly client: S3Client;
     private config: TypeStorageS3Config;
 
