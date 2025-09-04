@@ -47,6 +47,18 @@ export class StorageManager {
     }
 
     /**
+     * Establishes a connection to the underlying storage manager if required (e.g., for FTP/SFTP).
+     * S3 and Local storage do not require an explicit 'connect' method.
+     * @returns {Promise<void>}
+     */
+    public async connect(): Promise<void> {
+        if (this.type === ENUM_STORAGE_TYPE.ftp || this.type === ENUM_STORAGE_TYPE.sftp) {
+            await (this.activeManager as FtpClientManager | SftpClientManager).connect();
+        }
+        // S3 and Local storage do not require an explicit 'connect' method
+    }
+
+    /**
      * Uploads a file to the configured storage.
      * For FTP/SFTP, creates a temporary file before upload and removes it afterward.
      * @param {string} key - The key (path) where the file should be stored
