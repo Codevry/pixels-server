@@ -37,14 +37,10 @@ export default class SharpManager {
     /**
      * Converts the image to a specified format.
      * @param {keyof sharp.Format} format - The desired output format (e.g., 'jpeg', 'png', 'webp').
-     * @param {sharp.OutputOptions} [options] - Output options for the format.
      * @returns {SharpManager} The current SharpManager instance for chaining.
      */
-    public toFormat(
-        format: keyof FormatEnum,
-        options?: sharp.OutputOptions
-    ): SharpManager {
-        this.image = this.image.toFormat(format, options);
+    public toFormat(format: keyof FormatEnum): SharpManager {
+        this.image = this.image.toFormat(format);
         return this;
     }
 
