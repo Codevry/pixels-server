@@ -2,7 +2,6 @@
   "name": "pixels-server",
   "description": "image processing & caching service",
   "version": "0.1.0",
-  "module": "server/index.ts",
   "type": "module",
   "private": true,
   "scripts": {
