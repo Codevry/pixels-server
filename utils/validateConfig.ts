@@ -53,6 +53,14 @@ const StorageConfigSchema = z
         local: z.string().optional(),
     })
     .superRefine((data, ctx) => {
+        if (!data.s3 && !data.ftp && !data.local) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message:
+                    "At least one storage configuration (s3, ftp, or local) must be provided",
+                path: [],
+            });
+        }
         if (data.type === ENUM_STORAGE_TYPE.s3 && !data.s3) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
