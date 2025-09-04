@@ -4,7 +4,7 @@ import SFTPClient from "ssh2-sftp-client";
 /**
  * Manages SFTP connections and operations using the ssh2-sftp-client library.
  * This class encapsulates the logic for connecting, disconnecting, and performing
- * file transfers (e.g., upload, read) to an SFTP server based on the provided configuration.
+ * file transfers (e.g., upload, read) to an SFTP router based on the provided configuration.
  */
 export default class SftpClientManager {
     private config: TypeFtpConfig;
@@ -20,7 +20,7 @@ export default class SftpClientManager {
     }
 
     /**
-     * Establishes a connection to the SFTP server.
+     * Establishes a connection to the SFTP router.
      * It uses the configuration provided during instantiation.
      * Throws an error if the connection fails.
      */
@@ -43,7 +43,7 @@ export default class SftpClientManager {
     }
 
     /**
-     * Disconnects from the SFTP server.
+     * Disconnects from the SFTP router.
      * Throws an error if the disconnection fails.
      */
     public async disconnect(): Promise<void> {
@@ -58,12 +58,15 @@ export default class SftpClientManager {
     }
 
     /**
-     * Uploads a file from the local filesystem to the SFTP server.
+     * Uploads a file from the local filesystem to the SFTP router.
      * @param localPath The absolute path to the local file to upload.
-     * @param remotePath The absolute path on the SFTP server where the file should be stored.
+     * @param remotePath The absolute path on the SFTP router where the file should be stored.
      * Throws an error if the upload fails.
      */
-    public async uploadFile(localPath: string, remotePath: string): Promise<void> {
+    public async uploadFile(
+        localPath: string,
+        remotePath: string
+    ): Promise<void> {
         console.log(`Uploading ${localPath} to ${remotePath} via SFTP`);
         try {
             await this.sftpClient.put(localPath, remotePath);
@@ -75,9 +78,9 @@ export default class SftpClientManager {
     }
 
     /**
-     * Reads a file from the SFTP server and returns its content as a Buffer.
+     * Reads a file from the SFTP router and returns its content as a Buffer.
      * This is useful for processing file content directly in memory.
-     * @param remotePath The absolute path to the file on the SFTP server to read.
+     * @param remotePath The absolute path to the file on the SFTP router to read.
      * @returns A Buffer containing the file's content.
      * Throws an error if the file cannot be read or found.
      */
@@ -94,8 +97,8 @@ export default class SftpClientManager {
     }
 
     /**
-     * Deletes a file from the SFTP server.
-     * @param remotePath The absolute path to the file on the SFTP server to delete.
+     * Deletes a file from the SFTP router.
+     * @param remotePath The absolute path to the file on the SFTP router to delete.
      * Throws an error if the deletion fails.
      */
     public async deleteFile(remotePath: string): Promise<void> {

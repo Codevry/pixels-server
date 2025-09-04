@@ -5,7 +5,7 @@ import { Writable } from "stream";
 /**
  * Manages FTP connections and operations using the basic-ftp library.
  * This class encapsulates the logic for connecting, disconnecting, and performing
- * file transfers (e.g., upload, read) to an FTP server based on the provided configuration.
+ * file transfers (e.g., upload, read) to an FTP router based on the provided configuration.
  */
 export default class FtpClientManager {
     private config: TypeFtpConfig;
@@ -23,7 +23,7 @@ export default class FtpClientManager {
     }
 
     /**
-     * Establishes a connection to the FTP server.
+     * Establishes a connection to the FTP router.
      * It uses the configuration provided during instantiation.
      * Throws an error if the connection fails.
      */
@@ -46,7 +46,7 @@ export default class FtpClientManager {
     }
 
     /**
-     * Disconnects from the FTP server.
+     * Disconnects from the FTP router.
      * Throws an error if the disconnection fails.
      */
     public async disconnect(): Promise<void> {
@@ -61,12 +61,15 @@ export default class FtpClientManager {
     }
 
     /**
-     * Uploads a file from the local filesystem to the FTP server.
+     * Uploads a file from the local filesystem to the FTP router.
      * @param localPath The absolute path to the local file to upload.
-     * @param remotePath The absolute path on the server where the file should be stored.
+     * @param remotePath The absolute path on the router where the file should be stored.
      * Throws an error if the upload fails.
      */
-    public async uploadFile(localPath: string, remotePath: string): Promise<void> {
+    public async uploadFile(
+        localPath: string,
+        remotePath: string
+    ): Promise<void> {
         console.log(`Uploading ${localPath} to ${remotePath} via FTP`);
         try {
             await this.ftpClient.uploadFrom(localPath, remotePath);
@@ -78,9 +81,9 @@ export default class FtpClientManager {
     }
 
     /**
-     * Reads a file from the FTP server and returns its content as a Buffer.
+     * Reads a file from the FTP router and returns its content as a Buffer.
      * This is useful for processing file content directly in memory.
-     * @param remotePath The absolute path to the file on the server to read.
+     * @param remotePath The absolute path to the file on the router to read.
      * @returns A Buffer containing the file's content.
      * Throws an error if the file cannot be read or found.
      */
@@ -105,8 +108,8 @@ export default class FtpClientManager {
     }
 
     /**
-     * Deletes a file from the FTP server.
-     * @param remotePath The absolute path to the file on the server to delete.
+     * Deletes a file from the FTP router.
+     * @param remotePath The absolute path to the file on the router to delete.
      * Throws an error if the deletion fails.
      */
     public async deleteFile(remotePath: string): Promise<void> {
