@@ -1,4 +1,9 @@
 import type { ENUM_STORAGE_TYPE } from "@/utils/enums.ts";
+import { S3Manager, type TypeS3Manager } from "@/services/s3.ts";
+import FtpManager, { type TypeFtpManager } from "@/services/ftp.ts";
+
+// storage managers
+export type TypeStorageManager = Record<string, S3Manager | FtpManager>;
 
 // storage handling
 export type TypeStorage = Record<string, TypeStorageConfig>;
