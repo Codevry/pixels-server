@@ -1,5 +1,5 @@
 /**
- * @file Main server router setup and initialization.
+ * @file Main router router setup and initialization.
  * Handles configuration validation, storage management, database connections,
  * middleware setup, and route definitions.
  */
@@ -103,7 +103,7 @@ export default class Router {
     private routes() {
         // ping route
         this.app.on(["GET", "POST"], ["/", "/ping", "/health"], (c) =>
-            c.json({ success: true, message: "server is working", version })
+            c.json({ success: true, message: "router is working", version })
         );
 
         // app routes
