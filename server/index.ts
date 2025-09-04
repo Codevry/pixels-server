@@ -10,7 +10,8 @@ import { logger } from "hono/logger";
 import { DbRedis } from "@/services/dbRedis.ts";
 import Globals from "@/utils/globals.ts";
 import validateConfig from "@/utils/validateConfig.ts";
-import { StorageManager } from "@/services/storageManager.ts"; // New import
+import { StorageManager } from "@/services/storageManager.ts";
+import { ENUM_STORAGE_TYPE } from "@/utils/enums.ts"; // New import
 
 /**
  * Router class that handles the setup and initialization of the Hono application.
@@ -60,13 +61,31 @@ export default class Router {
             Globals.config.storage
         )) {
             try {
-                Globals.storage[storageName] = new StorageManager(storageConfig);
+                const manager = new StorageManager(storageConfig);
+                Globals.storage[storageName] = manager;
+
+                if (
+                    manager.type === ENUM_STORAGE_TYPE.ftp ||
+                    manager.type === ENUM_STORAGE_TYPE.sftp
+                ) {
+                    await manager.connect();
+                    console.log(
+                        `Storage manager '${storageName}' (${manager.type}) connected successfully.`
+                    );
+                } else {
+                    console.log(
+                        `Storage manager '${storageName}' (${manager.type}) initialized.`
+                    );
+                }
             } catch (error) {
-                console.error(`Failed to initialize storage manager for ${storageName}:`, error);
+                console.error(
+                    `Failed to initialize storage manager for ${storageName}:`,
+                    error
+                );
                 process.exit(1);
             }
         }
-        console.log("Storage managers initialized.");
+        console.log("All storage managers processed.");
     }
 
     /**
