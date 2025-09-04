@@ -15,6 +15,7 @@ type AnyStorageManager = S3Manager | FtpClientManager | SftpClientManager;
 export class StorageManager {
     private activeManager: AnyStorageManager;
     public readonly type: ENUM_STORAGE_TYPE;
+    private readonly cacheLocation?: string;
 
     /**
      * Creates an instance of StorageManager.
@@ -26,12 +27,15 @@ export class StorageManager {
         switch (config.type) {
             case ENUM_STORAGE_TYPE.s3:
                 this.activeManager = new S3Manager(config.s3!);
+                this.cacheLocation = config.s3?.cachePath;
                 break;
             case ENUM_STORAGE_TYPE.ftp:
                 this.activeManager = new FtpClientManager(config.ftp!);
+                this.cacheLocation = config.ftp?.cachePath;
                 break;
             case ENUM_STORAGE_TYPE.sftp:
                 this.activeManager = new SftpClientManager(config.ftp!);
+                this.cacheLocation = config.ftp?.cachePath;
                 break;
             case ENUM_STORAGE_TYPE.local:
                 throw new ErrorObject(
@@ -52,8 +56,13 @@ export class StorageManager {
      * @returns {Promise<void>}
      */
     public async connect(): Promise<void> {
-        if (this.type === ENUM_STORAGE_TYPE.ftp || this.type === ENUM_STORAGE_TYPE.sftp) {
-            await (this.activeManager as FtpClientManager | SftpClientManager).connect();
+        if (
+            this.type === ENUM_STORAGE_TYPE.ftp ||
+            this.type === ENUM_STORAGE_TYPE.sftp
+        ) {
+            await (
+                this.activeManager as FtpClientManager | SftpClientManager
+            ).connect();
         }
         // S3 and Local storage do not require an explicit 'connect' method
     }
