@@ -1,5 +1,5 @@
 import type { ENUM_STORAGE_TYPE } from "@/utils/enums.ts";
-import type { StorageManager } from "@/services/storageManager.ts";
+import type { StorageManager } from "@/storage/storageManager.ts";
 // storage managers
 export type TypeStorageManager = Record<string, StorageManager>;
 

@@ -10,7 +10,7 @@ import { logger } from "hono/logger";
 import { DbRedis } from "@/services/dbRedis.ts";
 import Globals from "@/utils/globals.ts";
 import validateConfig from "@/utils/validateConfig.ts";
-import { StorageManager } from "@/services/storageManager.ts";
+import { StorageManager } from "@/storage/storageManager.ts";
 import { ENUM_STORAGE_TYPE } from "@/utils/enums.ts"; // New import
 
 /**
