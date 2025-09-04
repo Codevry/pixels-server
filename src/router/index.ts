@@ -11,7 +11,8 @@ import { DbRedis } from "@/services/dbRedis.ts";
 import Globals from "@/utils/globals.ts";
 import validateConfig from "@/utils/validateConfig.ts";
 import { StorageManager } from "@/storage/storageManager.ts";
-import { ENUM_STORAGE_TYPE } from "@/utils/enums.ts"; // New import
+import { ENUM_STORAGE_TYPE } from "@/utils/enums.ts";
+import routeImage from "@/router/routeImage.ts"; // New import
 
 /**
  * Router class that handles the setup and initialization of the Hono application.
@@ -107,6 +108,7 @@ export default class Router {
         );
 
         // app routes
+        this.app.route("/images", routeImage);
 
         // 404
         this.app.all("*", (c) => {
