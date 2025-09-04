@@ -3,15 +3,34 @@ import { ENUM_STORAGE_TYPE } from "../utils/enums";
 import type { TypeFtpConfig } from "../types/typeStorage";
 import * as fs from "fs";
 import * as path from "path";
-import { beforeAll, describe, afterAll, expect, test } from "bun:test";
 
 // Define a temporary file path for testing uploads
 const TEST_FILE_PATH = path.join(import.meta.dir, "test.txt");
+const TEST_REMOTE_FILE_NAME = "test_remote_file.txt";
+const TEST_FILE_CONTENT = "This is a test file for upload.";
+
+const ftpConfig: TypeFtpConfig = {
+    host: "", // e.g., "localhost"
+    port: 21, // or your FTP port
+    user: "",
+    password: "",
+    remoteDir: "/", // or a specific directory for tests
+};
+
+// IMPORTANT: Replace with your writable SFTP server details
+const sftpConfig: TypeFtpConfig = {
+    host: "", // e.g., "localhost"
+    port: 22, // or your SFTP port
+    user: "",
+    privateKey: "",
+    passphrase: "", // Uncomment and provide if privateKey is encrypted
+    remoteDir: "/", // or a specific directory for tests
+};
 
 describe("FTP and SFTP Manager Tests", () => {
     // Before all tests, create a dummy file for upload tests
     beforeAll(() => {
-        fs.writeFileSync(TEST_FILE_PATH, "This is a test file for upload.");
+        fs.writeFileSync(TEST_FILE_PATH, TEST_FILE_CONTENT);
     });
 
     // After all tests, clean up the dummy file
@@ -19,63 +38,113 @@ describe("FTP and SFTP Manager Tests", () => {
         fs.unlinkSync(TEST_FILE_PATH);
     });
 
-    test("FTP operations (read and expected upload failure)", async () => {
-        const ftpConfig: TypeFtpConfig = {
-            host: "test.rebex.net",
-            port: 21,
-            user: "demo",
-            password: "password",
-        };
+    describe("FTP Operations", () => {
+        let ftpManager: FtpManager;
 
-        const ftpManager = new FtpManager(ftpConfig, ENUM_STORAGE_TYPE.ftp);
+        beforeEach(async () => {
+            ftpManager = new FtpManager(ftpConfig, ENUM_STORAGE_TYPE.ftp);
+            await ftpManager.connect();
+        });
 
-        await ftpManager.connect();
-        expect(true).toBe(true); // Connection successful
+        afterEach(async () => {
+            try {
+                // Attempt to delete the file if it exists, to clean up after tests
+                await ftpManager.deleteFile(TEST_REMOTE_FILE_NAME);
+            } catch (error: Error | any) {
+                // Ignore error if file doesn't exist, but log others
+                if (!error.message.includes("No such file")) {
+                    console.warn("Cleanup failed for FTP:", error.message);
+                }
+            }
+            await ftpManager.disconnect();
+        });
 
-        const buffer = await ftpManager.readFileBuffer("/readme.txt");
-        expect(buffer.length).toBeGreaterThan(0); // Ensure content is read
+        test("should upload a file to FTP", async () => {
+            await ftpManager.upload(TEST_FILE_PATH, TEST_REMOTE_FILE_NAME);
+            // No direct assertion here, subsequent read test will confirm upload
+        }, 20000);
 
-        // Test expected upload failure on a read-only server
-        let ftpUploadError: any;
-        try {
-            await ftpManager.upload(TEST_FILE_PATH, "/readme.txt");
-        } catch (error) {
-            ftpUploadError = error;
-        }
-        expect(ftpUploadError).toBeDefined();
-        expect(ftpUploadError.message).toContain("Access denied");
+        test("should read a file from FTP", async () => {
+            // Ensure file exists before reading
+            await ftpManager.upload(TEST_FILE_PATH, TEST_REMOTE_FILE_NAME);
 
-        await ftpManager.disconnect();
-        expect(true).toBe(true); // Disconnection successful
-    }, 20000); // Increase timeout for network operations
+            const buffer = await ftpManager.readFileBuffer(
+                TEST_REMOTE_FILE_NAME
+            );
+            const content = buffer.toString();
+            expect(content).toBe(TEST_FILE_CONTENT);
+        }, 20000);
 
-    test("SFTP operations (read and expected upload failure)", async () => {
-        const sftpConfig: TypeFtpConfig = {
-            host: "test.rebex.net",
-            port: 22,
-            user: "demo",
-            password: "password",
-        };
+        test("should delete a file from FTP", async () => {
+            // Ensure file exists before deleting
+            await ftpManager.upload(TEST_FILE_PATH, TEST_REMOTE_FILE_NAME);
 
-        const sftpManager = new FtpManager(sftpConfig, ENUM_STORAGE_TYPE.sftp);
+            await ftpManager.deleteFile(TEST_REMOTE_FILE_NAME);
 
-        await sftpManager.connect();
-        expect(true).toBe(true); // Connection successful
+            // Verify deletion by trying to read the file (expecting an error)
+            let error: any;
+            try {
+                await ftpManager.readFileBuffer(TEST_REMOTE_FILE_NAME);
+            } catch (e) {
+                error = e;
+            }
+            expect(error).toBeDefined();
+            expect(error.message).toContain("No such file");
+        }, 20000);
+    });
 
-        const buffer = await sftpManager.readFileBuffer("/readme.txt");
-        expect(buffer.length).toBeGreaterThan(0); // Ensure content is read
+    describe("SFTP Operations", () => {
+        let sftpManager: FtpManager;
 
-        // Test expected upload failure on a read-only server
-        let sftpUploadError: any;
-        try {
-            await sftpManager.upload(TEST_FILE_PATH, "/readme.txt");
-        } catch (error) {
-            sftpUploadError = error;
-        }
-        expect(sftpUploadError).toBeDefined();
-        expect(sftpUploadError.message).toContain("Access denied");
+        beforeEach(async () => {
+            sftpManager = new FtpManager(sftpConfig, ENUM_STORAGE_TYPE.sftp);
+            await sftpManager.connect();
+        });
 
-        await sftpManager.disconnect();
-        expect(true).toBe(true); // Disconnection successful
-    }, 20000); // Increase timeout for network operations
+        afterEach(async () => {
+            try {
+                // Attempt to delete the file if it exists, to clean up after tests
+                await sftpManager.deleteFile(TEST_REMOTE_FILE_NAME);
+            } catch (error: Error | any) {
+                // Ignore error if file doesn't exist, but log others
+                if (!error.message.includes("No such file")) {
+                    console.warn("Cleanup failed for SFTP:", error.message);
+                }
+            }
+            await sftpManager.disconnect();
+        });
+
+        test("should upload a file to SFTP", async () => {
+            await sftpManager.upload(TEST_FILE_PATH, TEST_REMOTE_FILE_NAME);
+            // No direct assertion here, subsequent read test will confirm upload
+        }, 20000);
+
+        test("should read a file from SFTP", async () => {
+            // Ensure file exists before reading
+            await sftpManager.upload(TEST_FILE_PATH, TEST_REMOTE_FILE_NAME);
+
+            const buffer = await sftpManager.readFileBuffer(
+                TEST_REMOTE_FILE_NAME
+            );
+            const content = buffer.toString();
+            expect(content).toBe(TEST_FILE_CONTENT);
+        }, 20000);
+
+        test("should delete a file from SFTP", async () => {
+            // Ensure file exists before deleting
+            await sftpManager.upload(TEST_FILE_PATH, TEST_REMOTE_FILE_NAME);
+
+            await sftpManager.deleteFile(TEST_REMOTE_FILE_NAME);
+
+            // Verify deletion by trying to read the file (expecting an error)
+            let error: any;
+            try {
+                await sftpManager.readFileBuffer(TEST_REMOTE_FILE_NAME);
+            } catch (e) {
+                error = e;
+            }
+            expect(error).toBeDefined();
+            expect(error.message).toContain("No such file");
+        }, 20000);
+    });
 });
