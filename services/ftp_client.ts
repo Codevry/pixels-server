@@ -66,7 +66,7 @@ export default class FtpClientManager {
      * @param remotePath The absolute path on the server where the file should be stored.
      * Throws an error if the upload fails.
      */
-    public async upload(localPath: string, remotePath: string): Promise<void> {
+    public async uploadFile(localPath: string, remotePath: string): Promise<void> {
         console.log(`Uploading ${localPath} to ${remotePath} via FTP`);
         try {
             await this.ftpClient.uploadFrom(localPath, remotePath);
@@ -84,7 +84,7 @@ export default class FtpClientManager {
      * @returns A Buffer containing the file's content.
      * Throws an error if the file cannot be read or found.
      */
-    public async readFileBuffer(remotePath: string): Promise<Buffer> {
+    public async readFile(remotePath: string): Promise<Buffer> {
         console.log(`Reading file buffer from ${remotePath} via FTP`);
         try {
             const chunks: Buffer[] = [];
