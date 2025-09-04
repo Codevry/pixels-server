@@ -1,9 +1,7 @@
 import type { ENUM_STORAGE_TYPE } from "@/utils/enums.ts";
-import { S3Manager, type TypeS3Manager } from "@/services/s3.ts";
-import FtpManager, { type TypeFtpManager } from "@/services/ftp.ts";
-
+import type { StorageManager } from "@/services/storageManager.ts";
 // storage managers
-export type TypeStorageManager = Record<string, S3Manager | FtpManager>;
+export type TypeStorageManager = Record<string, StorageManager>;
 
 // storage handling
 export type TypeStorage = Record<string, TypeStorageConfig>;
@@ -24,6 +22,7 @@ export type TypeStorageS3Config = {
     secretKey: string;
     prefix: string;
     region: string;
+    cachePath?: string;
 };
 
 // ftp storage
@@ -35,4 +34,5 @@ export type TypeFtpConfig = {
     privateKey?: string;
     passphrase?: string;
     remoteDir?: string;
+    cachePath?: string;
 };
