@@ -1,11 +1,11 @@
 /**
- * @file Main router router setup and initialization.
+ * @file Main router setup and initialization.
  * Handles configuration validation, storage management, database connections,
  * middleware setup, and route definitions.
  */
 
 import { Hono } from "hono";
-import { version } from "@/package.json";
+import { version } from "@/../package.json";
 import { logger } from "hono/logger";
 import { DbRedis } from "@/services/dbRedis.ts";
 import Globals from "@/utils/globals.ts";
@@ -127,7 +127,7 @@ export default class Router {
         await Globals.dbRedis
             .connect()
             .then(() => console.log("Connected to Redis"))
-            .catch((err) => {
+            .catch((err: any) => {
                 console.error(err);
                 process.exit(1);
             });
