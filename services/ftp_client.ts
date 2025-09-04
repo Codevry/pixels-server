@@ -92,7 +92,7 @@ export default class FtpClientManager {
                 write(chunk, encoding, callback) {
                     chunks.push(chunk);
                     callback();
-                }
+                },
             });
             await this.ftpClient.downloadTo(writable, remotePath);
             const buffer = Buffer.concat(chunks);
@@ -104,5 +104,21 @@ export default class FtpClientManager {
         }
     }
 
-    // Additional FTP operations (e.g., download to local file, listFiles, delete) can be added here as needed.
+    /**
+     * Deletes a file from the FTP server.
+     * @param remotePath The absolute path to the file on the server to delete.
+     * Throws an error if the deletion fails.
+     */
+    public async deleteFile(remotePath: string): Promise<void> {
+        console.log(`Deleting file ${remotePath} via FTP`);
+        try {
+            await this.ftpClient.remove(remotePath);
+            console.log("File deleted successfully.");
+        } catch (error) {
+            console.error("FTP delete file failed:", error);
+            throw error;
+        }
+    }
+
+    // Additional FTP operations (e.g., download to local file, listFiles) can be added here as needed.
 }
