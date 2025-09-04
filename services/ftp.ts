@@ -65,6 +65,16 @@ export default class FtpManager {
         return this.client.readFileBuffer(remotePath);
     }
 
+    /**
+     * Deletes a file from the FTP or SFTP server.
+     * Delegates the call to the underlying client (SftpManager or FtpClientManager).
+     * @param remotePath The absolute path to the file on the server to delete.
+     * Throws an error if the file cannot be deleted.
+     */
+    public async deleteFile(remotePath: string): Promise<void> {
+        await this.client.deleteFile(remotePath);
+    }
+
     // Additional FTP/SFTP operations can be added here and delegated to the client.
 }
 
