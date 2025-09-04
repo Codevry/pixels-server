@@ -93,5 +93,21 @@ export default class SftpClientManager {
         }
     }
 
-    // Additional SFTP operations (e.g., download to local file, listFiles, delete) can be added here as needed.
+    /**
+     * Deletes a file from the SFTP server.
+     * @param remotePath The absolute path to the file on the SFTP server to delete.
+     * Throws an error if the deletion fails.
+     */
+    public async deleteFile(remotePath: string): Promise<void> {
+        console.log(`Deleting file ${remotePath} via SFTP`);
+        try {
+            await this.sftpClient.delete(remotePath);
+            console.log("File deleted successfully.");
+        } catch (error) {
+            console.error("SFTP delete file failed:", error);
+            throw error;
+        }
+    }
+
+    // Additional SFTP operations (e.g., download to local file, listFiles) can be added here as needed.
 }
