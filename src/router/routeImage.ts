@@ -36,11 +36,7 @@ route.get("/:storage/public/:imagePath{.+}", async (c) => {
         }
     }
 
-    await ctrlImage.processImage({
-        imagePath: location,
-        storageName: storage,
-        queryParams: processedQueryParams,
-    });
+    await ctrlImage.processImage(location, storage, processedQueryParams);
 
     return c.text("Image processing initiated.");
 });
