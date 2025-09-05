@@ -1,6 +1,7 @@
 import type { TypeFtpConfig } from "@/types/typeStorage.ts";
 import * as FTPClient from "basic-ftp";
 import { Writable } from "stream";
+import { ErrorObject } from "@/utils/errorObject.ts";
 
 /**
  * Manages FTP connections and operations using the basic-ftp library.
@@ -101,8 +102,11 @@ export default class FtpClientManager {
             const buffer = Buffer.concat(chunks);
             console.log("File buffer read.");
             return buffer;
-        } catch (error) {
+        } catch (error: any) {
             console.error("FTP read file buffer failed:", error);
+            if (error.code === 550 || error.message?.includes("No such file")) {
+                throw new ErrorObject(404, `File not found: ${remotePath}`);
+            }
             throw error;
         }
     }

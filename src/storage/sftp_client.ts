@@ -1,5 +1,6 @@
 import type { TypeFtpConfig } from "@/types/typeStorage.ts";
 import SFTPClient from "ssh2-sftp-client";
+import { ErrorObject } from "@/utils/errorObject.ts";
 
 /**
  * Manages SFTP connections and operations using the ssh2-sftp-client library.
@@ -90,8 +91,11 @@ export default class SftpClientManager {
             const buffer = (await this.sftpClient.get(remotePath)) as Buffer;
             console.log("File buffer read.");
             return buffer;
-        } catch (error) {
+        } catch (error: any) {
             console.error("SFTP read file buffer failed:", error);
+            if (error.message.includes("No such file")) {
+                throw new ErrorObject(404, `File not found: ${remotePath}`);
+            }
             throw error;
         }
     }
