@@ -36,11 +36,12 @@ export default class SharpManager {
 
     /**
      * Converts the image to a specified format.
-     * @param {keyof sharp.Format} format - The desired output format (e.g., 'jpeg', 'png', 'webp').
+     * @param {keyof FormatEnum} format - The desired output format (e.g., 'jpeg', 'png', 'webp').
+     * @param {number} [quality] - Optional quality setting for output format (1-100).
      * @returns {SharpManager} The current SharpManager instance for chaining.
      */
-    public toFormat(format: keyof FormatEnum): SharpManager {
-        this.image = this.image.toFormat(format);
+    public toFormat(format: keyof FormatEnum, quality?: number): SharpManager {
+        this.image = this.image.toFormat(format, { quality });
         return this;
     }
 
