@@ -3,8 +3,10 @@ import { ErrorObject } from "@/utils/errorObject.ts";
 import {
     createNameFromParams,
     validateImageExtension,
+    validateQueryParams,
 } from "@/utils/functions.ts";
 import type { FormatEnum } from "sharp";
+import type { TypeImageConversionParams } from "@/types/typeImage.ts";
 
 export default class CtrlImage {
     /**
@@ -17,17 +19,14 @@ export default class CtrlImage {
      */
     async convertImage(
         inputBuffer: Buffer,
-        operations: Record<string, string>,
+        operations: Partial<TypeImageConversionParams>,
         extension: keyof FormatEnum
     ): Promise<Buffer> {
         let sharpManager = new SharpManager(inputBuffer);
 
         // for resize handling
         if (operations.width || operations.height) {
-            const w = operations.width ? Number(operations.width) : undefined;
-            const h = operations.height ? Number(operations.height) : undefined;
-
-            sharpManager.resize(w, h);
+            sharpManager.resize(operations.width, operations.height);
         }
 
         // handle various operations
@@ -35,13 +34,13 @@ export default class CtrlImage {
             try {
                 switch (methodName) {
                     case "rotate":
-                        sharpManager = sharpManager.rotate(Number(arg));
+                        sharpManager = sharpManager.rotate(arg as number);
                         break;
                     case "grayscale":
                         sharpManager = sharpManager.grayscale();
                         break;
                     case "blur":
-                        sharpManager = sharpManager.blur(Number(arg));
+                        sharpManager = sharpManager.blur(arg as number);
                         break;
                     case "flip":
                         sharpManager = sharpManager.flip();
@@ -50,18 +49,10 @@ export default class CtrlImage {
                         sharpManager = sharpManager.flop();
                         break;
                     case "tint":
-                        sharpManager = sharpManager.tint(arg);
+                        sharpManager = sharpManager.tint(arg as string);
                         break;
-                    default:
-                        throw new ErrorObject(
-                            401,
-                            `Unsupported operation: ${methodName}`
-                        );
                 }
             } catch (error: any) {
-                if (error instanceof ErrorObject) {
-                    throw error;
-                }
                 throw new ErrorObject(
                     400,
                     `Failed to apply operation '${methodName}': ${error.message}`
@@ -71,9 +62,8 @@ export default class CtrlImage {
 
         // Apply the format conversion at the end
         if (operations.format || operations.quality) {
-            const ext = validateImageExtension(operations.format || extension);
             sharpManager.toFormat(
-                ext,
+                extension,
                 operations.quality ? Number(operations.quality) : undefined
             );
         }
@@ -101,11 +91,16 @@ export default class CtrlImage {
             throw new ErrorObject(400, "File extension is missing");
         }
 
-        // validate image extension
-        const extension = validateImageExtension(ext);
+        // get final extension (which also validates original extension if not provided)
+        const extension = validateImageExtension(queryParams.format || ext);
+
+        // validate all queryParams
+        const validatedParams = validateQueryParams(queryParams);
 
         // unique name
-        const uniqueName = createNameFromParams(name, ext, queryParams);
+        const uniqueName = createNameFromParams(name, extension, queryParams);
+
+        console.log(uniqueName);
 
         // TODO: Get inputBuffer from storage based on params.storageName and params.imagePath
         const inputBuffer: Buffer = Buffer.from(""); // Placeholder for actual image buffer
