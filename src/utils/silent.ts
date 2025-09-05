@@ -4,7 +4,7 @@
  * @param fn - actual function
  * @constructor
  */
-export function Silent(name: string, fn: any) {
+export default function Silent(name: string, fn: any) {
     (async () => {
         try {
             await fn;
