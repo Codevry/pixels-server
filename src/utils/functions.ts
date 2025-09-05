@@ -1,5 +1,5 @@
 import { ErrorObject } from "@/utils/errorObject.ts";
-import { formatMap } from "@/utils/extras.ts";
+import { formatMap, imageConversionParams } from "@/utils/extras.ts";
 import type { FormatEnum } from "sharp";
 
 /**
@@ -28,18 +28,17 @@ export function hexToRgb(hex: string): { r: number; g: number; b: number } {
  */
 export function createNameFromParams(
     imageName: string,
-    imageExtension: string,
+    imageExtension: FormatEnum,
     queryParams: Record<string, string>
 ): string {
-    // Create a sorted string from query parameters for consistent naming
-    // Exclude 'format' key as it's handled separately in image processing
-    const paramsString = Object.entries(queryParams)
-        .filter(([key]) => key !== "format")
-        .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
-        .map(([key, value]) => `${key}-${value}`)
+    const mappedParams = Object.entries(queryParams)
+        .map(([key, value]) => imageConversionParams[key])
+        .sort()
         .join("-");
 
-    return `${imageName}-${paramsString}.${imageExtension}`;
+    return mappedParams
+        ? `${imageName}-${mappedParams}.${imageExtension}`
+        : `${imageName}.${imageExtension}`;
 }
 
 /**
