@@ -127,5 +127,24 @@ export default class FtpClientManager {
         }
     }
 
-    // Additional FTP operations (e.g., download to local file, listFiles) can be added here as needed.
+    /**
+     * Checks if a file exists on the FTP router.
+     * @param remotePath The absolute path to the file on the router to check.
+     * @returns {Promise<boolean>} True if the file exists, false otherwise.
+     */
+    public async exists(remotePath: string): Promise<boolean> {
+        console.log(`Checking if file ${remotePath} exists via FTP`);
+        try {
+            const dir = remotePath.substring(0, remotePath.lastIndexOf('/'));
+            const fileName = remotePath.substring(remotePath.lastIndexOf('/') + 1);
+
+            const list = await this.ftpClient.list(dir);
+            return list.some(entry => entry.name === fileName && entry.type === 1); // type 1 is file
+        } catch (error: any) {
+            if (error.code === 550) {
+                return false;
+            }
+            throw error; // Re-throw other unexpected errors
+        }
+    }
 }

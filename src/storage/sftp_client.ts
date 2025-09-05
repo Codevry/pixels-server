@@ -116,5 +116,19 @@ export default class SftpClientManager {
         }
     }
 
-    // Additional SFTP operations (e.g., download to local file, listFiles) can be added here as needed.
+    /**
+     * Checks if a file exists on the SFTP router.
+     * @param remotePath The absolute path to the file on the router to check.
+     * @returns {Promise<boolean>} True if the file exists, false otherwise.
+     */
+    public async exists(remotePath: string): Promise<boolean> {
+        console.log(`Checking if file ${remotePath} exists via SFTP`);
+        try {
+            const result = await this.sftpClient.exists(remotePath);
+            return result !== false; // exists returns false if not found, or 'd' for directory, '-' for file etc.
+        } catch (error) {
+            console.error("SFTP exists check failed:", error);
+            throw error;
+        }
+    }
 }

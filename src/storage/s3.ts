@@ -3,6 +3,7 @@ import {
     PutObjectCommand,
     GetObjectCommand,
     DeleteObjectCommand,
+    HeadObjectCommand,
     NotFound,
 } from "@aws-sdk/client-s3";
 import type { TypeStorageS3Config } from "@/types/typeStorage.ts";
@@ -89,6 +90,28 @@ export default class S3Manager {
             });
             return await this.client.send(command);
         } catch (error) {
+            throw new ErrorObject(502, error);
+        }
+    }
+
+    /**
+     * Checks if a file exists in S3.
+     * @param {string} key - The key (path) of the file in the bucket.
+     * @returns {Promise<boolean>} - True if the file exists, false otherwise.
+     */
+    public async exists(key: string): Promise<boolean> {
+        try {
+            const command = new HeadObjectCommand({
+                Bucket: this.config.bucket,
+                Key: key,
+            });
+            await this.client.send(command);
+            return true;
+        } catch (error) {
+            if (error instanceof NotFound) {
+                return false;
+            }
+            // Re-throw other errors
             throw new ErrorObject(502, error);
         }
     }

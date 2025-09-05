@@ -115,4 +115,13 @@ export class StorageManager {
     public async deleteFile(key: string): Promise<any> {
         return this.activeManager.deleteFile(key);
     }
+
+    /**
+     * Checks if a file exists in the configured storage.
+     * @param {string} key - The key (path) of the file to check
+     * @returns {Promise<boolean>} True if the file exists, false otherwise
+     */
+    public async exists(key: string): Promise<boolean> {
+        return this.activeManager.exists(key);
+    }
 }
