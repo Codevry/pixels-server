@@ -28,13 +28,21 @@ export function hexToRgb(hex: string): { r: number; g: number; b: number } {
  */
 export function createNameFromParams(
     imageName: string,
-    imageExtension: FormatEnum,
+    imageExtension: keyof FormatEnum,
     queryParams: Record<string, string>
 ): string {
-    const mappedParams = Object.entries(queryParams)
-        .map(([key, value]) => imageConversionParams[key])
-        .sort()
-        .join("-");
+    const params: string[] = [];
+
+    // handling each params and assign to paramString
+    for (const [key, value] of Object.entries(queryParams)) {
+        if (key !== "format" && imageConversionParams[key]) {
+            const keyName = imageConversionParams[key];
+            params.push(`${keyName}-${value}`);
+        }
+    }
+
+    // convert to string
+    const mappedParams = params.length > 0 ? params.sort().join("-") : null;
 
     return mappedParams
         ? `${imageName}-${mappedParams}.${imageExtension}`
