@@ -1,7 +1,7 @@
 import type { FormatEnum } from "sharp";
 
 // useful for creating image name
-export const imageConversionParams = {
+export const imageConversionParams: Record<string, string> = {
     height: "h",
     width: "w",
     quality: "q",
