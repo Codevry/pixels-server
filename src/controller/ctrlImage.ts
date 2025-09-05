@@ -1,110 +1,115 @@
 import SharpManager from "@/services/sharp.ts";
 import { ErrorObject } from "@/utils/errorObject.ts";
+import {
+    createNameFromParams,
+    validateImageExtension,
+} from "@/utils/functions.ts";
+import type { FormatEnum } from "sharp";
 
 export default class CtrlImage {
     /**
      * Dynamically applies image transformations based on a record of operations.
      * @param {Buffer} inputBuffer - The input image as a Buffer.
      * @param {Record<string, string>} operations - A record where keys are SharpManager method names and values are stringified arguments.
+     * @param extension original image extension (from a path)
      * @returns {Promise<Buffer>} The processed image as a Buffer.
      * @throws {ErrorObject} If any operation fails or is unsupported.
      */
     async convertImage(
         inputBuffer: Buffer,
-        operations: Record<string, string>
+        operations: Record<string, string>,
+        extension: keyof FormatEnum
     ): Promise<Buffer> {
-        let sharpInstance = new SharpManager(inputBuffer);
+        let sharpManager = new SharpManager(inputBuffer);
 
-        // Extract width and height for resize before processing other operations
-        let resizeWidth: number | undefined;
-        let resizeHeight: number | undefined;
-        const filteredOperations: Record<string, string> = {};
+        // for resize handling
+        if (operations.width || operations.height) {
+            const w = operations.width ? Number(operations.width) : undefined;
+            const h = operations.height ? Number(operations.height) : undefined;
 
-        for (const [key, value] of Object.entries(operations)) {
-            if (key === "width") {
-                resizeWidth = parseInt(value);
-            } else if (key === "height") {
-                resizeHeight = parseInt(value);
-            } else {
-                filteredOperations[key] = value;
-            }
+            sharpManager.resize(w, h);
         }
 
-        // Apply resize if width or height are present
-        if (resizeWidth !== undefined || resizeHeight !== undefined) {
-            sharpInstance = sharpInstance.resize(resizeWidth, resizeHeight);
-        }
-
-        for (const [methodName, argsString] of Object.entries(
-            filteredOperations
-        )) {
-            // Ensure the method exists on SharpManager and is a function
-            if (
-                typeof sharpInstance[methodName as keyof SharpManager] ===
-                "function"
-            ) {
-                try {
-                    let parsedArgs: any[] = [];
-
-                    // Parse arguments based on method name
-                    if (argsString) {
-                        if (methodName === "toFormat") {
-                            parsedArgs = [argsString];
-                        } else if (
-                            methodName === "rotate" ||
-                            methodName === "blur"
-                        ) {
-                            parsedArgs = [parseFloat(argsString)];
-                        } else if (methodName === "tint") {
-                            parsedArgs = [argsString]; // hex color string
-                        } else if (methodName === "negate") {
-                            parsedArgs = [argsString === "true"];
-                        } else {
-                            // For methods that might take a single string/number argument not covered above
-                            // or if the argument is just a simple value
-                            parsedArgs = [argsString];
-                        }
-                    }
-
-                    // Dynamically call the method
-                    sharpInstance = (
-                        sharpInstance[methodName as keyof SharpManager] as any
-                    )(...parsedArgs);
-                } catch (e: any) {
-                    throw new ErrorObject(
-                        400,
-                        `Invalid arguments for ${methodName}: ${argsString}. Error: ${e.message || e}`
-                    );
+        // handle various operations
+        for (const [methodName, arg] of Object.entries(operations)) {
+            try {
+                switch (methodName) {
+                    case "rotate":
+                        sharpManager = sharpManager.rotate(Number(arg));
+                        break;
+                    case "grayscale":
+                        sharpManager = sharpManager.grayscale();
+                        break;
+                    case "blur":
+                        sharpManager = sharpManager.blur(Number(arg));
+                        break;
+                    case "flip":
+                        sharpManager = sharpManager.flip();
+                        break;
+                    case "flop":
+                        sharpManager = sharpManager.flop();
+                        break;
+                    case "tint":
+                        sharpManager = sharpManager.tint(arg);
+                        break;
+                    default:
+                        throw new ErrorObject(
+                            401,
+                            `Unsupported operation: ${methodName}`
+                        );
                 }
-            } else {
+            } catch (error: any) {
+                if (error instanceof ErrorObject) {
+                    throw error;
+                }
                 throw new ErrorObject(
                     400,
-                    `Unsupported image operation: ${methodName}`
+                    `Failed to apply operation '${methodName}': ${error.message}`
                 );
             }
         }
 
-        return await sharpInstance.toBuffer();
+        // Apply the format conversion at the end
+        if (operations.format || operations.quality) {
+            const ext = validateImageExtension(operations.format || extension);
+            sharpManager.toFormat(
+                ext,
+                operations.quality ? Number(operations.quality) : undefined
+            );
+        }
+
+        return await sharpManager.toBuffer();
     }
 
     /**
      * Processes an image based on its path, storage name, and query parameters.
-     * @param {object} params - The parameters for image processing.
-     * @param {string} params.imagePath - The path to the image.
-     * @param {string} params.storageName - The name of the storage.
-     * @param {Record<string, string>} params.queryParams - A record of query parameters for image operations.
+     * @param {string} imagePath - The path to the image.
+     * @param {string} storageName - The name of the storage.
+     * @param {Record<string, string>} queryParams - A record of query parameters for image operations.
      */
-    async processImage(params: {
-        imagePath: string;
-        storageName: string;
-        queryParams: Record<string, string>;
-    }): Promise<void> {
-        console.log("Processing image with params:", {
-            imagePath: params.imagePath,
-            storageName: params.storageName,
-            queryParams: params.queryParams,
-        });
+    async processImage(
+        imagePath: string,
+        storageName: string,
+        queryParams: Record<string, string>
+    ): Promise<void> {
+        // Extract file extension and base name from the path
+        const ext = imagePath.split(".").pop() || "";
+        const name = imagePath.split("/").pop()?.split(".")[0] || "";
 
-        // TODO: Implement image processing logic here
+        // if extension is empty
+        if (!ext) {
+            throw new ErrorObject(400, "File extension is missing");
+        }
+
+        // validate image extension
+        const extension = validateImageExtension(ext);
+
+        // unique name
+        const uniqueName = createNameFromParams(name, ext, queryParams);
+
+        // TODO: Get inputBuffer from storage based on params.storageName and params.imagePath
+        const inputBuffer: Buffer = Buffer.from(""); // Placeholder for actual image buffer
+
+        // TODO: Save processedImageBuffer to storage
     }
 }
