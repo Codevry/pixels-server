@@ -15,4 +15,17 @@ export default class CtrlRedis {
     async removeImageConverted(image: string): Promise<boolean> {
         return (await Globals.dbRedis.delete(`processed:image:${image}`)) > 0;
     }
+
+    /**
+     * save converted image in cache
+     * @param image
+     */
+    async saveImageConverted(image: string): Promise<boolean> {
+        return (
+            (await Globals.dbRedis.create(
+                `processed:image:${image}`,
+                "true"
+            )) == "OK"
+        );
+    }
 }
