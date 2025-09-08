@@ -10,3 +10,8 @@ export type TypeImageConversionParams = {
     flop: boolean;
     tint: string;
 };
+
+export type TypeImageResponse = {
+    image: Buffer;
+    extension: string;
+};
