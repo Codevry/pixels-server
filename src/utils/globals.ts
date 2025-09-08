@@ -1,6 +1,6 @@
 import type { DbRedis } from "@/services/dbRedis.ts";
 import type { TypeConfig } from "@/types/typeConfig.ts";
-import type { TypeStorage, TypeStorageManager } from "@/types/typeStorage.ts";
+import type { TypeStorageManager } from "@/types/typeStorage.ts";
 import CtrlRedis from "@/controller/ctrlRedis.ts";
 
 export default class Globals {
