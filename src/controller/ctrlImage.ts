@@ -100,38 +100,24 @@ export default class CtrlImage {
             false
         );
 
-        // check if this is an original image
-        // for that we will check if any operations are present
-        if (Object.keys(operations).length > 0) {
-            // convert it
-            const converted = await this.convertImage(
-                image!,
-                operations,
-                newExtension
-            );
+        // convert it
+        const converted = await this.convertImage(
+            image!,
+            operations,
+            newExtension
+        );
 
-            // save it in storage
-            Silent(
-                "saveImageConverted",
-                Globals.storage[storage]?.uploadFile(parsedName, converted)
-            );
+        // save it in storage
+        Silent(
+            "saveImageConverted",
+            Globals.storage[storage]?.uploadFile(parsedName, converted)
+        );
 
-            // save it in cache
-            Silent(
-                "saveImageCache",
-                Globals.ctrlRedis.saveImageRef(parsedName)
-            );
-
-            // return converted image
-            return {
-                image: converted,
-                extension: newExtension,
-            };
-        } else
-            return {
-                image: image!,
-                extension: originalExtension,
-            };
+        // return converted image
+        return {
+            image: converted,
+            extension: newExtension,
+        };
     }
 
     /**
