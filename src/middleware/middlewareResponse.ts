@@ -10,6 +10,10 @@ export function MiddlewareResponse(
         try {
             const response = await fn(c);
             c.status(200);
+
+            if (response instanceof Response) {
+                return response;
+            }
             return c.json(response);
         } catch (err: ErrorObject | any) {
             if (err instanceof ErrorObject) {
