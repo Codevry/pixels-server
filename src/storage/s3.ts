@@ -5,6 +5,8 @@ import {
     DeleteObjectCommand,
     HeadObjectCommand,
     NotFound,
+    type PutObjectCommandOutput,
+    type DeleteObjectCommandOutput,
 } from "@aws-sdk/client-s3";
 import type { TypeStorageS3Config } from "@/types/typeStorage.ts";
 import { ErrorObject } from "@/utils/errorObject.ts";
@@ -14,8 +16,8 @@ export default class S3Manager {
     private config: TypeStorageS3Config;
 
     /**
-     * Creates an instance of S3Manager
-     * @param {TypeStorageS3Config} config - The configuration object for S3
+     * Creates an instance of S3Manager for handling S3 storage operations
+     * @param {TypeStorageS3Config} config - Configuration object containing S3 credentials and settings
      */
     constructor(config: TypeStorageS3Config) {
         this.config = config;
@@ -30,16 +32,23 @@ export default class S3Manager {
     }
 
     /**
-     * Uploads a file to S3.=
-     * @param {string} key - The key (path) of the file in the bucket.
-     * @param {Buffer} body - The content of the file to upload as a Buffer.
-     * @returns {Promise<any>} - The result of the upload operation.
+     * Uploads a file to S3 storage
+     * @param {string} key - The key (path) of the file in the bucket
+     * @param {Buffer} body - The content of the file to upload as a Buffer
+     * @param {boolean} toCache - Flag indicating whether to store in cache path
+     * @returns {Promise<PutObjectCommandOutput>} Result of the upload operation
+     * @throws {ErrorObject} Throws when upload fails
      */
-    public async uploadFile(key: string, body: Buffer): Promise<any> {
+    public async uploadFile(
+        key: string,
+        body: Buffer,
+        toCache: boolean
+    ): Promise<PutObjectCommandOutput> {
         try {
+            const prefix = toCache ? this.config.cachePath : this.config.prefix;
             const command = new PutObjectCommand({
                 Bucket: this.config.bucket,
-                Key: this.config.prefix + key,
+                Key: prefix + key,
                 Body: body,
             });
             return await this.client.send(command);
@@ -49,16 +58,19 @@ export default class S3Manager {
     }
 
     /**
-     * Reads a file from S3.
-     * @param {string} key - The key (path) of the file in the bucket.
-     * @returns {Promise<Buffer>} - The content of the file as a Buffer.
-     * @throws {ErrorObject} - Throws an ErrorObject if the file is not found or another error occurs.
+     * Reads a file from S3 storage
+     * @param {string} key - The key (path) of the file in the bucket
+     * @param {boolean} toCache - Flag indicating whether to read from cache path
+     * @returns {Promise<Buffer>} The content of the file as a Buffer
+     * @throws {ErrorObject} Throws when the file is not found or read operation fails
      */
-    public async readFile(key: string): Promise<Buffer> {
+    public async readFile(key: string, toCache: boolean): Promise<Buffer> {
         try {
+            const prefix = toCache ? this.config.cachePath : this.config.prefix;
+
             const command = new GetObjectCommand({
                 Bucket: this.config.bucket,
-                Key: this.config.prefix + key,
+                Key: prefix + key,
             });
             const response = await this.client.send(command);
             if (response.Body) {
@@ -81,15 +93,22 @@ export default class S3Manager {
     }
 
     /**
-     * Deletes a file from S3.
-     * @param {string} key - The key (path) of the file in the bucket.
-     * @returns {Promise<any>} - The result of the delete operation.
+     * Deletes a file from S3 storage
+     * @param {string} key - The key (path) of the file in the bucket
+     * @param {boolean} toCache - Flag indicating whether to delete from cache path
+     * @returns {Promise<DeleteObjectCommandOutput>} Result of the delete operation
+     * @throws {ErrorObject} Throws when delete operation fails
      */
-    public async deleteFile(key: string): Promise<any> {
+    public async deleteFile(
+        key: string,
+        toCache: boolean
+    ): Promise<DeleteObjectCommandOutput> {
         try {
+            const prefix = toCache ? this.config.cachePath : this.config.prefix;
+
             const command = new DeleteObjectCommand({
                 Bucket: this.config.bucket,
-                Key: this.config.prefix + key,
+                Key: prefix + key,
             });
             return await this.client.send(command);
         } catch (error) {
@@ -98,15 +117,22 @@ export default class S3Manager {
     }
 
     /**
-     * Checks if a file exists in S3.
-     * @param {string} key - The key (path) of the file in the bucket.
-     * @returns {Promise<boolean>} - True if the file exists, false otherwise.
+     * Checks if a file exists in S3 storage
+     * @param {string} key - The key (path) of the file in the bucket
+     * @param {boolean} toCache - Flag indicating whether to check in cache path
+     * @returns {Promise<boolean>} True if the file exists, false otherwise
+     * @throws {ErrorObject} Throws when check operation fails with error other than NotFound
      */
-    public async exists(key: string): Promise<boolean> {
+    public async exists(key: string, toCache: boolean): Promise<boolean> {
         try {
+            const prefix =
+                toCache && this.config.cachePath
+                    ? this.config.cachePath
+                    : this.config.prefix;
+
             const command = new HeadObjectCommand({
                 Bucket: this.config.bucket,
-                Key: this.config.prefix + key,
+                Key: prefix + key,
             });
             await this.client.send(command);
             return true;
