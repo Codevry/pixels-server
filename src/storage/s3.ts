@@ -70,8 +70,11 @@ export default class S3Manager {
                 );
             }
         } catch (error) {
-            if (error instanceof NotFound) {
-                throw new ErrorObject(404, "File not found.");
+            if (
+                error instanceof NotFound ||
+                (error instanceof Error && error.name === "NoSuchKey")
+            ) {
+                throw new ErrorObject(404, "Image not exists in storage");
             }
             throw new ErrorObject(502, error);
         }
