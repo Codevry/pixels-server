@@ -35,17 +35,15 @@ export default class S3Manager {
      * Uploads a file to S3 storage
      * @param {string} key - The key (path) of the file in the bucket
      * @param {Buffer} body - The content of the file to upload as a Buffer
-     * @param {boolean} toCache - Flag indicating whether to store in cache path
      * @returns {Promise<PutObjectCommandOutput>} Result of the upload operation
      * @throws {ErrorObject} Throws when upload fails
      */
     public async uploadFile(
         key: string,
-        body: Buffer,
-        toCache: boolean
+        body: Buffer
     ): Promise<PutObjectCommandOutput> {
         try {
-            const prefix = toCache ? this.config.cachePath : this.config.prefix;
+            const prefix = this.config.convertPath || this.config.prefix;
             const command = new PutObjectCommand({
                 Bucket: this.config.bucket,
                 Key: prefix + key,
@@ -60,13 +58,21 @@ export default class S3Manager {
     /**
      * Reads a file from S3 storage
      * @param {string} key - The key (path) of the file in the bucket
-     * @param {boolean} toCache - Flag indicating whether to read from cache path
+     * @param {boolean} fromConvertPath - Read the file for convertPath or original
      * @returns {Promise<Buffer>} The content of the file as a Buffer
      * @throws {ErrorObject} Throws when the file is not found or read operation fails
      */
-    public async readFile(key: string, toCache: boolean): Promise<Buffer> {
+    public async readFile(
+        key: string,
+        fromConvertPath: boolean = true
+    ): Promise<Buffer> {
         try {
-            const prefix = toCache ? this.config.cachePath : this.config.prefix;
+            // Choose between convertPath (if specified and requested) or default prefix
+            // This allows flexibility in storing files in different paths based on their purpose
+            const prefix =
+                fromConvertPath && this.config.convertPath
+                    ? this.config.convertPath
+                    : this.config.prefix;
 
             const command = new GetObjectCommand({
                 Bucket: this.config.bucket,
@@ -92,6 +98,8 @@ export default class S3Manager {
         }
     }
 
+    // TODO
+
     /**
      * Deletes a file from S3 storage
      * @param {string} key - The key (path) of the file in the bucket
@@ -99,7 +107,7 @@ export default class S3Manager {
      * @returns {Promise<DeleteObjectCommandOutput>} Result of the delete operation
      * @throws {ErrorObject} Throws when delete operation fails
      */
-    public async deleteFile(
+    /*public async deleteFile(
         key: string,
         toCache: boolean
     ): Promise<DeleteObjectCommandOutput> {
@@ -114,7 +122,7 @@ export default class S3Manager {
         } catch (error) {
             throw new ErrorObject(502, error);
         }
-    }
+    }*/
 
     /**
      * Checks if a file exists in S3 storage
@@ -123,7 +131,7 @@ export default class S3Manager {
      * @returns {Promise<boolean>} True if the file exists, false otherwise
      * @throws {ErrorObject} Throws when check operation fails with error other than NotFound
      */
-    public async exists(key: string, toCache: boolean): Promise<boolean> {
+    /*public async exists(key: string, toCache: boolean): Promise<boolean> {
         try {
             const prefix =
                 toCache && this.config.cachePath
@@ -143,5 +151,5 @@ export default class S3Manager {
             // Re-throw other errors
             throw new ErrorObject(502, error);
         }
-    }
+    }*/
 }

@@ -15,7 +15,6 @@ type AnyStorageManager = S3Manager | FtpClientManager | SftpClientManager;
 export class StorageManager {
     private activeManager: AnyStorageManager;
     public readonly type: ENUM_STORAGE_TYPE;
-    private readonly cacheLocation?: string;
 
     /**
      * Creates an instance of StorageManager.
@@ -27,15 +26,13 @@ export class StorageManager {
         switch (config.type) {
             case ENUM_STORAGE_TYPE.s3:
                 this.activeManager = new S3Manager(config.s3!);
-                this.cacheLocation = config.s3?.cachePath;
+
                 break;
             case ENUM_STORAGE_TYPE.ftp:
                 this.activeManager = new FtpClientManager(config.ftp!);
-                this.cacheLocation = config.ftp?.cachePath;
                 break;
             case ENUM_STORAGE_TYPE.sftp:
                 this.activeManager = new SftpClientManager(config.ftp!);
-                this.cacheLocation = config.ftp?.cachePath;
                 break;
             case ENUM_STORAGE_TYPE.local:
                 throw new ErrorObject(
@@ -72,21 +69,12 @@ export class StorageManager {
      * For FTP/SFTP, creates a temporary file before upload and removes it afterward.
      * @param {string} key - The key (path) where the file should be stored
      * @param {Buffer} body - The content of the file to upload
-     * @param {boolean} toCache - Whether to cache the file after upload
      * @returns {Promise<any>} Result of the upload operation
      * @throws {ErrorObject} Will throw an error if upload is not supported for the storage type
      */
-    public async uploadFile(
-        key: string,
-        body: Buffer,
-        toCache: boolean = true
-    ): Promise<any> {
+    public async uploadFile(key: string, body: Buffer): Promise<any> {
         if (this.type === ENUM_STORAGE_TYPE.s3) {
-            return (this.activeManager as S3Manager).uploadFile(
-                key,
-                body,
-                toCache
-            );
+            return (this.activeManager as S3Manager).uploadFile(key, body);
         } else if (
             this.type === ENUM_STORAGE_TYPE.ftp ||
             this.type === ENUM_STORAGE_TYPE.sftp
@@ -110,14 +98,14 @@ export class StorageManager {
     /**
      * Reads a file from the configured storage.
      * @param {string} key - The key (path) of the file to read
-     * @param {boolean} fromCache - Whether to read from/store to cache
+     * @param {boolean} fromConvertPath - Whether to read in the convertPath
      * @returns {Promise<Buffer>} The content of the file as a Buffer
      */
     public async readFile(
         key: string,
-        fromCache: boolean = true
+        fromConvertPath: boolean = true
     ): Promise<Buffer> {
-        return this.activeManager.readFile(key, fromCache);
+        return this.activeManager.readFile(key, fromConvertPath);
     }
 
     /**
@@ -126,9 +114,9 @@ export class StorageManager {
      * @param {boolean} fromCache - Whether to also remove from cache
      * @returns {Promise<any>} Result of the delete operation
      */
-    public async deleteFile(key: string, fromCache: boolean): Promise<any> {
+    /* public async deleteFile(key: string, fromCache: boolean): Promise<any> {
         return this.activeManager.deleteFile(key, fromCache);
-    }
+    }*/
 
     /**
      * Checks if a file exists in the configured storage.
@@ -136,7 +124,7 @@ export class StorageManager {
      * @param {boolean} inCache - Whether to check existence in cache
      * @returns {Promise<boolean>} True if the file exists, false otherwise
      */
-    public async exists(key: string, inCache: boolean): Promise<boolean> {
+    /*public async exists(key: string, inCache: boolean): Promise<boolean> {
         return this.activeManager.exists(key, inCache);
-    }
+    }*/
 }
