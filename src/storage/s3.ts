@@ -39,7 +39,7 @@ export default class S3Manager {
         try {
             const command = new PutObjectCommand({
                 Bucket: this.config.bucket,
-                Key: key,
+                Key: this.config.prefix + key,
                 Body: body,
             });
             return await this.client.send(command);
@@ -58,7 +58,7 @@ export default class S3Manager {
         try {
             const command = new GetObjectCommand({
                 Bucket: this.config.bucket,
-                Key: key,
+                Key: this.config.prefix + key,
             });
             const response = await this.client.send(command);
             if (response.Body) {
@@ -89,7 +89,7 @@ export default class S3Manager {
         try {
             const command = new DeleteObjectCommand({
                 Bucket: this.config.bucket,
-                Key: key,
+                Key: this.config.prefix + key,
             });
             return await this.client.send(command);
         } catch (error) {
@@ -106,7 +106,7 @@ export default class S3Manager {
         try {
             const command = new HeadObjectCommand({
                 Bucket: this.config.bucket,
-                Key: key,
+                Key: this.config.prefix + key,
             });
             await this.client.send(command);
             return true;
