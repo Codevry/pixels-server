@@ -167,3 +167,43 @@ export function validateQueryParams(
 
     return validatedParams;
 }
+
+/**
+ * Returns the Content-Type MIME type for a given image extension.
+ * @param {string} extension - The image file extension (e.g., 'jpg', 'png').
+ * @returns {string} The corresponding Content-Type string (e.g., 'image/jpeg').
+ * @throws {ErrorObject} If the extension is not supported.
+ */
+export function getImageContentType(extension: string): string {
+    const lowerCaseExtension = extension.toLowerCase();
+    switch (lowerCaseExtension) {
+        case "jpg":
+        case "jpeg":
+            return "image/jpeg";
+        case "png":
+            return "image/png";
+        case "gif":
+            return "image/gif";
+        case "webp":
+            return "image/webp";
+        case "tiff":
+        case "tif":
+            return "image/tiff";
+        case "svg":
+            return "image/svg+xml";
+        case "ico":
+            return "image/x-icon";
+        case "bmp":
+            return "image/bmp";
+        case "avif":
+            return "image/avif";
+        case "heif":
+        case "heic":
+            return "image/heif";
+        default:
+            throw new ErrorObject(
+                400,
+                `Unsupported image content type extension: ${extension}`
+            );
+    }
+}
