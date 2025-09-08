@@ -22,7 +22,7 @@ export type TypeStorageS3Config = {
     secretKey: string;
     prefix: string;
     region: string;
-    cachePath?: string;
+    convertPath?: string;
 };
 
 // ftp storage
