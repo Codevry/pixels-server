@@ -150,74 +150,60 @@ export default class CtrlImage {
         const name = imagePath.split("/").pop()?.split(".")[0] || "";
 
         // if extension is empty
-        if (!ext) {
-            throw new ErrorObject(400, "File extension is missing");
-        }
-
-        // get final extension (which also validates original extension if not provided)
-        const extension = validateImageExtension(queryParams.format || ext);
-        const originalExtension = validateImageExtension(ext);
+        if (!ext) throw new ErrorObject(400, "File extension is missing");
 
         // validate all queryParams
         const validatedParams = validateQueryParams(queryParams);
 
-        // get unique name
-        const uniqueName = createNameFromParams(name, extension, queryParams);
+        // check if query params are required
+        if (Object.keys(validatedParams).length === 0)
+            throw new ErrorObject(400, "Query params required for conversion");
 
-        // find image in cache/storage
-        // the first step is we check in our redis cache if we have reference
-        // that this file is ever converted or not
-        // if no params i.e. original image (hence converted is false)
-        const isConverted =
-            Object.keys(validatedParams).length > 0
-                ? await Globals.ctrlRedis.findImageRef(uniqueName)
-                : false;
+        // get final extension (which also validates original extension if not provided)
+        const newExtension = validateImageExtension(queryParams.format);
+        const originalExtension = validateImageExtension(ext)!;
+
+        // get new / unique name (for conversion - will remain same if no params)
+        const newName = createNameFromParams(
+            name,
+            newExtension || originalExtension,
+            queryParams
+        );
 
         // if available then readFile & return
-        if (isConverted) {
-            return new Promise((resolve, reject) => {
-                // get image from storage (with params)
-                Globals.storage[storageName]!.readFile(uniqueName)
-                    .then((image) =>
-                        resolve({
-                            image,
-                            extension,
-                        })
-                    )
-                    .catch((err) => {
-                        // if file not found then remove from cache & convert it
-                        if (err instanceof ErrorObject && err.status === 404) {
-                            // remove from cache
-                            Silent(
-                                "removeImageRef",
-                                Globals.ctrlRedis.removeImageRef(uniqueName)
-                            );
+        return new Promise((resolve, reject) => {
+            // get image from storage (with params)
+            Globals.storage[storageName]!.readFile(newName)
+                .then((image) =>
+                    resolve({
+                        image,
+                        extension: newExtension || originalExtension,
+                    })
+                )
+                .catch((err) => {
+                    // if file not found then remove from cache & convert it
+                    if (err instanceof ErrorObject && err.status === 404) {
+                        // remove from cache
+                        Silent(
+                            "removeImageRef",
+                            Globals.ctrlRedis.removeImageRef(newName)
+                        );
 
-                            // fetch original image & process it
-                            resolve(
-                                this.processImage(
-                                    storageName,
-                                    name,
-                                    uniqueName,
-                                    validatedParams,
-                                    originalExtension,
-                                    extension
-                                )
-                            );
-                        }
-                        // any other issue
-                        else reject(err);
-                    });
-            });
-        } // fetch original image & process it
-        else
-            return this.processImage(
-                storageName,
-                name,
-                uniqueName,
-                validatedParams,
-                originalExtension,
-                extension
-            );
+                        // fetch original image & process it
+                        resolve(
+                            this.processImage(
+                                storageName,
+                                name,
+                                newName,
+                                validatedParams,
+                                originalExtension,
+                                newExtension || originalExtension
+                            )
+                        );
+                    }
+                    // any other issue
+                    else reject(err);
+                });
+        });
     }
 }
