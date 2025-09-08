@@ -41,7 +41,7 @@ export default class CtrlImage {
                     case "rotate":
                         sharpManager = sharpManager.rotate(arg as number);
                         break;
-                    case "grayscale":
+                    case "greyscale":
                         sharpManager = sharpManager.grayscale();
                         break;
                     case "blur":
