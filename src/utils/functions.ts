@@ -52,11 +52,15 @@ export function createNameFromParams(
 
 /**
  * Validates an image extension against supported formats and returns the sharp-compatible format.
- * @param {string} extension - The input image extension (e.g., 'jpg', 'png').
- * @returns {keyof FormatEnum} The sharp-compatible format string.
- * @throws {ErrorObject} If the extension is not supported.
+ * @param {string} extension - The file extension to validate (e.g., 'jpg', 'png'). Can be empty.
+ * @returns {keyof FormatEnum | null} The sharp-compatible format string, or null if extension is empty.
+ * @throws {ErrorObject} If the extension is provided but not supported in the format map.
  */
-export function validateImageExtension(extension: string): keyof FormatEnum {
+export function validateImageExtension(
+    extension?: string
+): keyof FormatEnum | null {
+    // if no extension, then return null
+    if (!extension) return null;
     const lowerCaseExtension = extension.toLowerCase();
     const outputFormat = formatMap[lowerCaseExtension];
 
@@ -142,7 +146,8 @@ export function validateQueryParams(
 
             // Handle special case parameters: format validation and hex color conversion
             case "format":
-                validatedParams.format = validateImageExtension(value);
+                validatedParams.format =
+                    validateImageExtension(value) || undefined;
                 break;
 
             case "tint":
