@@ -12,7 +12,8 @@ import Globals from "@/utils/globals.ts";
 import validateConfig from "@/utils/validateConfig.ts";
 import { StorageManager } from "@/storage/storageManager.ts";
 import { ENUM_STORAGE_TYPE } from "@/utils/enums.ts";
-import routeImage from "@/router/routeImage.ts"; // New import
+import routeImage from "@/router/routeImage.ts";
+import { MiddlewareUnhandled } from "@/middleware/middlewareUnhandled.ts"; // New import
 
 /**
  * Router class that handles the setup and initialization of the Hono application.
@@ -95,7 +96,7 @@ export default class Router {
      */
     private middlewares() {
         this.app.use(logger());
-        //this.app.use(MiddlewareUnhandled());
+        this.app.use(MiddlewareUnhandled());
     }
 
     /**
@@ -135,9 +136,6 @@ export default class Router {
             });
     }
 
-    /**
-     * setup & return
-     */
     /**
      * Initializes and configures the application.
      * Performs the following setup steps in order:
