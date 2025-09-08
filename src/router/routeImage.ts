@@ -6,7 +6,8 @@
 
 import { Hono } from "hono"; // Web framework for handling HTTP requests
 import CtrlImage from "@/controller/ctrlImage.ts";
-import { MiddlewareResponse } from "@/middleware/middlewareResponse.ts"; // Controller for image processing operations
+import { MiddlewareResponse } from "@/middleware/middlewareResponse.ts";
+import { getImageContentType } from "@/utils/functions.ts"; // Controller for image processing operations
 
 // Initialize Hono router instance
 const route = new Hono();
@@ -39,19 +40,16 @@ route.get(
             }
         }
 
-        const image = await ctrlImage.getImage(
+        // get the image & extension
+        const result = await ctrlImage.getImage(
             location,
             storage!,
             processedQueryParams
         );
 
-        // Set content type based on image extension
-        const extension = location.split(".").pop() || "jpeg";
-        const contentType = `image/${extension === "jpg" ? "jpeg" : extension}`;
-
-        return new Response(image as Buffer, {
+        return new Response(result.image as Buffer, {
             headers: {
-                "Content-Type": contentType,
+                "Content-Type": getImageContentType(result.extension),
             },
         });
     })
