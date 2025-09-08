@@ -182,13 +182,7 @@ export default class CtrlImage {
                 )
                 .catch((err) => {
                     // if file not found then remove from cache & convert it
-                    if (err instanceof ErrorObject && err.status === 404) {
-                        // remove from cache
-                        Silent(
-                            "removeImageRef",
-                            Globals.ctrlRedis.removeImageRef(newName)
-                        );
-
+                    if (err instanceof ErrorObject && err.status === 404)
                         // fetch original image & process it
                         resolve(
                             this.processImage(
@@ -200,7 +194,6 @@ export default class CtrlImage {
                                 newExtension || originalExtension
                             )
                         );
-                    }
                     // any other issue
                     else reject(err);
                 });
