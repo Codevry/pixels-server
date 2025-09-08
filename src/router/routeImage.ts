@@ -7,7 +7,8 @@
 import { Hono } from "hono"; // Web framework for handling HTTP requests
 import CtrlImage from "@/controller/ctrlImage.ts";
 import { MiddlewareResponse } from "@/middleware/middlewareResponse.ts";
-import { getImageContentType } from "@/utils/functions.ts"; // Controller for image processing operations
+import { getImageContentType } from "@/utils/functions.ts";
+import { timeout } from "hono/timeout"; // Controller for image processing operations
 
 // Initialize Hono router instance
 const route = new Hono();
@@ -22,6 +23,7 @@ const ctrlImage = new CtrlImage();
  */
 route.get(
     "/:storage/public/:imagePath{.+}",
+    timeout(30000),
     MiddlewareResponse(async (c) => {
         // Extract storage name from URL parameters
         const { storage } = c.req.param();
