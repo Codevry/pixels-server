@@ -9,9 +9,9 @@ type AnyStorageManager = S3Manager | FtpClientManager | SftpClientManager;
 
 /**
  * StorageManager class that provides a unified interface for different storage types (S3, FTP, SFTP).
- * Acts as a facade for specific storage implementations and handles file operations.
+ * Acts as a facade for specific storage implementations and handles file operations such as upload,
+ * download, deletion and existence checks. Also handles caching operations when specified.
  */
-
 export class StorageManager {
     private activeManager: AnyStorageManager;
     public readonly type: ENUM_STORAGE_TYPE;
@@ -72,12 +72,21 @@ export class StorageManager {
      * For FTP/SFTP, creates a temporary file before upload and removes it afterward.
      * @param {string} key - The key (path) where the file should be stored
      * @param {Buffer} body - The content of the file to upload
+     * @param {boolean} toCache - Whether to cache the file after upload
      * @returns {Promise<any>} Result of the upload operation
      * @throws {ErrorObject} Will throw an error if upload is not supported for the storage type
      */
-    public async uploadFile(key: string, body: Buffer): Promise<any> {
+    public async uploadFile(
+        key: string,
+        body: Buffer,
+        toCache: boolean = true
+    ): Promise<any> {
         if (this.type === ENUM_STORAGE_TYPE.s3) {
-            return (this.activeManager as S3Manager).uploadFile(key, body);
+            return (this.activeManager as S3Manager).uploadFile(
+                key,
+                body,
+                toCache
+            );
         } else if (
             this.type === ENUM_STORAGE_TYPE.ftp ||
             this.type === ENUM_STORAGE_TYPE.sftp
@@ -101,27 +110,33 @@ export class StorageManager {
     /**
      * Reads a file from the configured storage.
      * @param {string} key - The key (path) of the file to read
+     * @param {boolean} fromCache - Whether to read from/store to cache
      * @returns {Promise<Buffer>} The content of the file as a Buffer
      */
-    public async readFile(key: string): Promise<Buffer> {
-        return this.activeManager.readFile(key);
+    public async readFile(
+        key: string,
+        fromCache: boolean = true
+    ): Promise<Buffer> {
+        return this.activeManager.readFile(key, fromCache);
     }
 
     /**
      * Deletes a file from the configured storage.
      * @param {string} key - The key (path) of the file to delete
+     * @param {boolean} fromCache - Whether to also remove from cache
      * @returns {Promise<any>} Result of the delete operation
      */
-    public async deleteFile(key: string): Promise<any> {
-        return this.activeManager.deleteFile(key);
+    public async deleteFile(key: string, fromCache: boolean): Promise<any> {
+        return this.activeManager.deleteFile(key, fromCache);
     }
 
     /**
      * Checks if a file exists in the configured storage.
      * @param {string} key - The key (path) of the file to check
+     * @param {boolean} inCache - Whether to check existence in cache
      * @returns {Promise<boolean>} True if the file exists, false otherwise
      */
-    public async exists(key: string): Promise<boolean> {
-        return this.activeManager.exists(key);
+    public async exists(key: string, inCache: boolean): Promise<boolean> {
+        return this.activeManager.exists(key, inCache);
     }
 }
