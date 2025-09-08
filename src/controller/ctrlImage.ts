@@ -77,7 +77,14 @@ export default class CtrlImage {
     }
 
     /**
-     *
+     * Processes an image by converting it according to specified operations and storing the result.
+     * @param {string} storage - The storage identifier where the image is located.
+     * @param {string} originalName - The original name of the image file without extension.
+     * @param {string} parsedName - The new name for the processed image.
+     * @param {Partial<TypeImageConversionParams>} operations - Image processing operations to be applied.
+     * @param {keyof FormatEnum} originalExtension - The original file extension.
+     * @param {keyof FormatEnum} newExtension - The target file extension.
+     * @returns {Promise<TypeImageResponse>} Object containing the processed image buffer and its extension.
      */
     async processImage(
         storage: string,
@@ -89,30 +96,42 @@ export default class CtrlImage {
     ): Promise<TypeImageResponse> {
         // this will automatically returns error if image not exists
         const image = await Globals.storage[storage]?.readFile(
-            `${originalName}.${originalExtension}`
+            `${originalName}.${originalExtension}`,
+            false
         );
 
-        // convert it
-        const converted = await this.convertImage(
-            image!,
-            operations,
-            newExtension
-        );
+        // check if this is an original image
+        // for that we will check if any operations are present
+        if (Object.keys(operations).length > 0) {
+            // convert it
+            const converted = await this.convertImage(
+                image!,
+                operations,
+                newExtension
+            );
 
-        // save it in storage
-        Silent(
-            "saveImageConverted",
-            Globals.storage[storage]?.uploadFile(parsedName, converted)
-        );
+            // save it in storage
+            Silent(
+                "saveImageConverted",
+                Globals.storage[storage]?.uploadFile(parsedName, converted)
+            );
 
-        // save it in cache
-        Silent("saveImageCache", Globals.ctrlRedis.saveImageRef(parsedName));
+            // save it in cache
+            Silent(
+                "saveImageCache",
+                Globals.ctrlRedis.saveImageRef(parsedName)
+            );
 
-        // return converted image
-        return {
-            image: converted,
-            extension: newExtension,
-        };
+            // return converted image
+            return {
+                image: converted,
+                extension: newExtension,
+            };
+        } else
+            return {
+                image: image!,
+                extension: originalExtension,
+            };
     }
 
     /**
@@ -146,7 +165,13 @@ export default class CtrlImage {
         const uniqueName = createNameFromParams(name, extension, queryParams);
 
         // find image in cache/storage
-        const isConverted = await Globals.ctrlRedis.findImageRef(uniqueName);
+        // the first step is we check in our redis cache if we have reference
+        // that this file is ever converted or not
+        // if no params i.e. original image (hence converted is false)
+        const isConverted =
+            Object.keys(validatedParams).length > 0
+                ? await Globals.ctrlRedis.findImageRef(uniqueName)
+                : false;
 
         // if available then readFile & return
         if (isConverted) {
@@ -168,22 +193,17 @@ export default class CtrlImage {
                                 Globals.ctrlRedis.removeImageRef(uniqueName)
                             );
 
-                            // check if no operations are present
-                            // i.e. we tried fetching original image
-                            if (Object.keys(validatedParams).length === 0)
-                                reject(err);
-                            else
-                                // fetch original image & process it
-                                resolve(
-                                    this.processImage(
-                                        storageName,
-                                        name,
-                                        uniqueName,
-                                        validatedParams,
-                                        originalExtension,
-                                        extension
-                                    )
-                                );
+                            // fetch original image & process it
+                            resolve(
+                                this.processImage(
+                                    storageName,
+                                    name,
+                                    uniqueName,
+                                    validatedParams,
+                                    originalExtension,
+                                    extension
+                                )
+                            );
                         }
                         // any other issue
                         else reject(err);
