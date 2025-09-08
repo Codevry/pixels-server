@@ -6,7 +6,10 @@ import {
     validateQueryParams,
 } from "@/utils/functions.ts";
 import type { FormatEnum } from "sharp";
-import type { TypeImageConversionParams } from "@/types/typeImage.ts";
+import type {
+    TypeImageConversionParams,
+    TypeImageResponse,
+} from "@/types/typeImage.ts";
 import Globals from "@/utils/globals.ts";
 import Silent from "@/utils/silent.ts";
 
@@ -81,18 +84,19 @@ export default class CtrlImage {
         originalName: string,
         parsedName: string,
         operations: Partial<TypeImageConversionParams>,
-        extension: keyof FormatEnum
-    ): Promise<Buffer> {
+        originalExtension: keyof FormatEnum,
+        newExtension: keyof FormatEnum
+    ): Promise<TypeImageResponse> {
         // this will automatically returns error if image not exists
         const image = await Globals.storage[storage]?.readFile(
-            `${originalName}.${extension}`
+            `${originalName}.${originalExtension}`
         );
 
         // convert it
         const converted = await this.convertImage(
             image!,
             operations,
-            extension
+            newExtension
         );
 
         // save it in storage
@@ -105,7 +109,10 @@ export default class CtrlImage {
         Silent("saveImageCache", Globals.ctrlRedis.saveImageRef(parsedName));
 
         // return converted image
-        return converted;
+        return {
+            image: converted,
+            extension: newExtension,
+        };
     }
 
     /**
@@ -118,7 +125,7 @@ export default class CtrlImage {
         imagePath: string,
         storageName: string,
         queryParams: Record<string, string>
-    ): Promise<Buffer | ErrorObject> {
+    ): Promise<TypeImageResponse> {
         // Extract file extension and base name from the path
         const ext = imagePath.split(".").pop() || "";
         const name = imagePath.split("/").pop()?.split(".")[0] || "";
@@ -130,6 +137,7 @@ export default class CtrlImage {
 
         // get final extension (which also validates original extension if not provided)
         const extension = validateImageExtension(queryParams.format || ext);
+        const originalExtension = validateImageExtension(ext);
 
         // validate all queryParams
         const validatedParams = validateQueryParams(queryParams);
@@ -145,7 +153,12 @@ export default class CtrlImage {
             return new Promise((resolve, reject) => {
                 // get image from storage (with params)
                 Globals.storage[storageName]!.readFile(uniqueName)
-                    .then((image) => resolve(image))
+                    .then((image) =>
+                        resolve({
+                            image,
+                            extension,
+                        })
+                    )
                     .catch((err) => {
                         // if file not found then remove from cache & convert it
                         if (err instanceof ErrorObject && err.status === 404) {
@@ -167,6 +180,7 @@ export default class CtrlImage {
                                         name,
                                         uniqueName,
                                         validatedParams,
+                                        originalExtension,
                                         extension
                                     )
                                 );
@@ -182,6 +196,7 @@ export default class CtrlImage {
                 name,
                 uniqueName,
                 validatedParams,
+                originalExtension,
                 extension
             );
     }
