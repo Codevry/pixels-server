@@ -8,11 +8,40 @@ import { ErrorObject } from "@/utils/errorObject.ts";
 type AnyStorageManager = S3Manager | FtpClientManager | SftpClientManager;
 
 /**
+ * Interface defining the contract for storage management operations.
+ * Implementations should handle various storage types (S3, FTP, SFTP, etc.).
+ */
+interface StorageManagerInterface {
+    /**
+     * Uploads a file to the storage.
+     * @param {string} key - The key (path) where the file should be stored
+     * @param {Buffer} body - The content of the file to upload
+     * @returns {Promise<any>} Result of the upload operation
+     */
+    uploadFile(key: string, body: Buffer): Promise<any>;
+
+    /**
+     * Reads a file from the storage.
+     * @param {string} key - The key (path) of the file to read
+     * @param {boolean} [fromConvertPath] - Whether to read from the convert path
+     * @returns {Promise<Buffer>} The content of the file as a Buffer
+     */
+    readFile(key: string, fromConvertPath?: boolean): Promise<Buffer>;
+
+    /**
+     * Lists all files in a specified directory.
+     * @param {string} directoryPath - The directory path to list files from
+     * @returns {Promise<string[]>} Array of file keys (paths)
+     */
+    listFiles(directoryPath: string): Promise<string[]>;
+}
+
+/**
  * StorageManager class that provides a unified interface for different storage types (S3, FTP, SFTP).
  * Acts as a facade for specific storage implementations and handles file operations such as upload,
  * download, deletion and existence checks. Also handles caching operations when specified.
  */
-export class StorageManager {
+export class StorageManager implements StorageManagerInterface {
     private activeManager: AnyStorageManager;
     public readonly type: ENUM_STORAGE_TYPE;
 
@@ -106,6 +135,23 @@ export class StorageManager {
         fromConvertPath: boolean = true
     ): Promise<Buffer> {
         return this.activeManager.readFile(key, fromConvertPath);
+    }
+
+    /**
+     * Lists all files within a specified directory (prefix) in the configured storage.
+     * Currently only implemented for S3.
+     * @param {string} directoryPath - The directory (prefix) to list files from.
+     * @returns {Promise<string[]>} An array of file keys (paths).
+     * @throws {ErrorObject} Throws when the list operation is not supported for the storage type or fails.
+     */
+    public async listFiles(directoryPath: string): Promise<string[]> {
+        if (this.type === ENUM_STORAGE_TYPE.s3) {
+            return (this.activeManager as S3Manager).listFiles(directoryPath);
+        }
+        throw new ErrorObject(
+            500,
+            "List files operation not supported for this storage type."
+        );
     }
 
     /**
