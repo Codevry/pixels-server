@@ -57,7 +57,6 @@ export default class CtrlBatch {
                     filePath,
                     parsedName,
                     transformations,
-                    originalExtension,
                     newExtension || originalExtension
                 );
                 done++;

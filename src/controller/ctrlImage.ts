@@ -82,7 +82,6 @@ export default class CtrlImage {
      * @param {string} originalPath - The original image path
      * @param {string} parsedName - The new name for the processed image.
      * @param {Partial<TypeImageConversionParams>} operations - Image processing operations to be applied.
-     * @param {keyof FormatEnum} originalExtension - The original file extension.
      * @param {keyof FormatEnum} newExtension - The target file extension.
      * @returns {Promise<TypeImageResponse>} Object containing the processed image buffer and its extension.
      */
@@ -91,7 +90,6 @@ export default class CtrlImage {
         originalPath: string,
         parsedName: string,
         operations: Partial<TypeImageConversionParams>,
-        originalExtension: keyof FormatEnum,
         newExtension: keyof FormatEnum
     ): Promise<TypeImageResponse> {
         // this will automatically returns error if image not exists
@@ -173,10 +171,9 @@ export default class CtrlImage {
                         resolve(
                             this.processImage(
                                 storageName,
-                                name,
+                                imagePath,
                                 newName,
                                 validatedParams,
-                                originalExtension,
                                 newExtension || originalExtension
                             )
                         );
