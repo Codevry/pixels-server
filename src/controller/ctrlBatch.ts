@@ -1,6 +1,5 @@
 import { ErrorObject } from "@/utils/errorObject.ts";
 import Globals from "@/utils/globals.ts";
-import type { TypeImageConversionParams } from "@/types/typeImage.ts";
 import {
     createNameFromParams,
     validateImageExtension,
@@ -120,5 +119,14 @@ export default class CtrlBatch {
                 );
             }
         }
+    }
+
+    /**
+     * Retrieves the current progress of a batch process from Redis.
+     * @param {string} token - Unique identifier for the batch process.
+     * @returns {Promise<object | null>} The progress object if found, otherwise null.
+     */
+    public async getBatchProgress(token: string): Promise<object | null> {
+        return Globals.ctrlRedis.getProgress(token);
     }
 }
