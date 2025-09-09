@@ -4,9 +4,11 @@ import {
     GetObjectCommand,
     DeleteObjectCommand,
     HeadObjectCommand,
+    ListObjectsV2Command,
     NotFound,
     type PutObjectCommandOutput,
     type DeleteObjectCommandOutput,
+    type ListObjectsV2CommandOutput,
 } from "@aws-sdk/client-s3";
 import type { TypeStorageS3Config } from "@/types/typeStorage.ts";
 import { ErrorObject } from "@/utils/errorObject.ts";
@@ -98,7 +100,41 @@ export default class S3Manager {
         }
     }
 
-    // TODO
+    /**
+     * Lists all files within a specified directory (prefix) in the S3 bucket.
+     * Handles pagination to retrieve all objects.
+     * @param {string} directoryPath - The directory (prefix) to list files from.
+     * @returns {Promise<string[]>} An array of file keys (paths).
+     * @throws {ErrorObject} Throws when the list operation fails.
+     */
+    public async listFiles(directoryPath: string): Promise<string[]> {
+        try {
+            const files: string[] = [];
+            let continuationToken: string | undefined;
+
+            do {
+                const command = new ListObjectsV2Command({
+                    Bucket: this.config.bucket,
+                    Prefix: directoryPath,
+                    ContinuationToken: continuationToken,
+                });
+                const response: ListObjectsV2CommandOutput = await this.client.send(command);
+
+                if (response.Contents) {
+                    for (const content of response.Contents) {
+                        if (content.Key) {
+                            files.push(content.Key);
+                        }
+                    }
+                }
+                continuationToken = response.NextContinuationToken;
+            } while (continuationToken);
+
+            return files;
+        } catch (error) {
+            throw new ErrorObject(502, error);
+        }
+    }
 
     /**
      * Deletes a file from S3 storage
