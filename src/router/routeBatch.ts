@@ -1,5 +1,4 @@
 import { Hono } from "hono";
-import CtrlBatch from "@/controller/ctrlBatch.ts";
 import { ErrorObject } from "@/utils/errorObject.ts";
 import { MiddlewareResponse } from "@/middleware/middlewareResponse.ts";
 import Globals from "@/utils/globals.ts";
@@ -47,6 +46,34 @@ app.post(
             success: true,
             message: "Batch processing initiated successfully.",
             token,
+        });
+    })
+);
+
+/**
+ * Check the current progress of a batch process.
+ *
+ * @route GET /progress/:token
+ * @param {string} token - The unique token returned by the /process endpoint.
+ */
+app.get(
+    "/progress/:token",
+    MiddlewareResponse(async (c) => {
+        const token = c.req.param("token");
+
+        if (!token) {
+            throw new ErrorObject(400, "Missing token parameter.");
+        }
+
+        const progress = await Globals.ctrlBatch.getBatchProgress(token);
+
+        if (!progress) {
+            throw new ErrorObject(404, `No progress found for token: ${token}`);
+        }
+
+        return c.json({
+            success: true,
+            progress,
         });
     })
 );
