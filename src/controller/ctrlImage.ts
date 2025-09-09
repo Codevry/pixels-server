@@ -79,7 +79,7 @@ export default class CtrlImage {
     /**
      * Processes an image by converting it according to specified operations and storing the result.
      * @param {string} storage - The storage identifier where the image is located.
-     * @param {string} originalName - The original name of the image file without extension.
+     * @param {string} originalPath - The original image path
      * @param {string} parsedName - The new name for the processed image.
      * @param {Partial<TypeImageConversionParams>} operations - Image processing operations to be applied.
      * @param {keyof FormatEnum} originalExtension - The original file extension.
@@ -88,7 +88,7 @@ export default class CtrlImage {
      */
     async processImage(
         storage: string,
-        originalName: string,
+        originalPath: string,
         parsedName: string,
         operations: Partial<TypeImageConversionParams>,
         originalExtension: keyof FormatEnum,
@@ -96,7 +96,7 @@ export default class CtrlImage {
     ): Promise<TypeImageResponse> {
         // this will automatically returns error if image not exists
         const image = await Globals.storage[storage]?.readFile(
-            `${originalName}.${originalExtension}`,
+            originalPath,
             false
         );
 
