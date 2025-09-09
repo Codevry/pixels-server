@@ -4,6 +4,7 @@ import { ErrorObject } from "@/utils/errorObject.ts";
 import { MiddlewareResponse } from "@/middleware/middlewareResponse.ts";
 import Globals from "@/utils/globals.ts";
 import Silent from "@/utils/silent.ts";
+import { nanoid } from "nanoid";
 
 const app = new Hono();
 
@@ -28,9 +29,14 @@ app.post(
             );
         }
 
+        // generate a unique token
+        const token = nanoid();
+
+        // run the function in background
         Silent(
             "batchTransformation",
             Globals.ctrlBatch.batchTransformAndUpload(
+                token,
                 storageName,
                 path,
                 transformations
@@ -40,6 +46,7 @@ app.post(
         return c.json({
             success: true,
             message: "Batch processing initiated successfully.",
+            token,
         });
     })
 );
