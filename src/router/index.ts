@@ -13,6 +13,7 @@ import validateConfig from "@/utils/validateConfig.ts";
 import { StorageManager } from "@/storage/storageManager.ts";
 import { ENUM_STORAGE_TYPE } from "@/utils/enums.ts";
 import routeImage from "@/router/routeImage.ts";
+import routeBatch from "@/router/routeBatch.ts";
 import { MiddlewareUnhandled } from "@/middleware/middlewareUnhandled.ts"; // New import
 
 /**
@@ -110,6 +111,7 @@ export default class Router {
 
         // app routes
         this.app.route("/images", routeImage);
+        this.app.route("/batch", routeBatch);
 
         // 404
         this.app.all("*", (c) => {
