@@ -17,7 +17,7 @@ const app = new Hono();
  * @param {Object[]} requestBody.transformations - Array of transformation configurations to apply
  */
 app.post(
-    "/process",
+    "/process/directory",
     MiddlewareResponse(async (c) => {
         const { storageName, path, transformations } = await c.req.json();
 
@@ -45,6 +45,49 @@ app.post(
         return c.json({
             success: true,
             message: "Batch processing initiated successfully.",
+            token,
+        });
+    })
+);
+
+/**
+ * Process a batch of image transformations for a given list of files.
+ *
+ * @route POST /process/list
+ * @param {Object} requestBody - The request body
+ * @param {string} requestBody.storageName - The name of the storage configuration to use
+ * @param {string[]} requestBody.filePaths - An array of file paths to process
+ * @param {Object[]} requestBody.transformations - Array of transformation configurations to apply
+ */
+app.post(
+    "/process/list",
+    MiddlewareResponse(async (c) => {
+        const { storageName, filePaths, transformations } = await c.req.json();
+
+        if (!storageName || !filePaths || !Array.isArray(filePaths) || filePaths.length === 0 || !transformations) {
+            throw new ErrorObject(
+                400,
+                "Missing required parameters: storageName, filePaths (non-empty array), and transformations."
+            );
+        }
+
+        // generate a unique token
+        const token = nanoid();
+
+        // run the function in background
+        Silent(
+            "batchTransformationFromList",
+            Globals.ctrlBatch.batchTransformAndUploadFromList(
+                token,
+                storageName,
+                filePaths,
+                transformations
+            )
+        );
+
+        return c.json({
+            success: true,
+            message: "Batch processing from list initiated successfully.",
             token,
         });
     })
