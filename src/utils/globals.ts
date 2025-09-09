@@ -3,6 +3,7 @@ import type { TypeConfig } from "@/types/typeConfig.ts";
 import type { TypeStorageManager } from "@/types/typeStorage.ts";
 import CtrlRedis from "@/controller/ctrlRedis.ts";
 import CtrlBatch from "@/controller/ctrlBatch.ts";
+import CtrlImage from "@/controller/ctrlImage.ts";
 
 export default class Globals {
     static dbRedis: DbRedis;
@@ -10,4 +11,5 @@ export default class Globals {
     static storage: TypeStorageManager = {} as TypeStorageManager;
     static ctrlRedis: CtrlRedis = new CtrlRedis();
     static ctrlBatch = new CtrlBatch();
+    static ctrlImage = new CtrlImage();
 }
