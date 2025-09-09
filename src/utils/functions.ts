@@ -212,3 +212,18 @@ export function getImageContentType(extension: string): string {
             );
     }
 }
+
+/**
+ * Sanitizes an S3 path by combining prefix and path, removing leading slashes,
+ * and replacing multiple consecutive slashes with a single one.
+ * @param {string} configPrefix - The configured storage prefix/path (e.g., 'bucket/folder/')
+ * @param {string} path - The path to be combined with the prefix and sanitized
+ * @returns {string} A sanitized path string suitable for S3 operations
+ */
+export function sanitizeS3Path(configPrefix: string, path: string): string {
+    // Replace multiple slashes with single
+    // Remove leading slash too
+    return (configPrefix + path)
+        .replace(/^\/+/, "") // Remove leading slash
+        .replace(/\/+/g, "/");
+}
