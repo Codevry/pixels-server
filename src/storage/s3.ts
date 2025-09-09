@@ -12,6 +12,7 @@ import {
 } from "@aws-sdk/client-s3";
 import type { TypeStorageS3Config } from "@/types/typeStorage.ts";
 import { ErrorObject } from "@/utils/errorObject.ts";
+import { sanitizeS3Path } from "@/utils/functions.ts";
 
 export default class S3Manager {
     private readonly client: S3Client;
@@ -109,16 +110,16 @@ export default class S3Manager {
      */
     public async listFiles(directoryPath: string): Promise<string[]> {
         try {
-            const files: string[] = [];
+            let files: string[] = [];
             let continuationToken: string | undefined;
-
             do {
                 const command = new ListObjectsV2Command({
                     Bucket: this.config.bucket,
-                    Prefix: directoryPath,
+                    Prefix: sanitizeS3Path(this.config.prefix, directoryPath),
                     ContinuationToken: continuationToken,
                 });
-                const response: ListObjectsV2CommandOutput = await this.client.send(command);
+                const response: ListObjectsV2CommandOutput =
+                    await this.client.send(command);
 
                 if (response.Contents) {
                     for (const content of response.Contents) {
@@ -130,7 +131,15 @@ export default class S3Manager {
                 continuationToken = response.NextContinuationToken;
             } while (continuationToken);
 
-            return files;
+            // filter files based on convertPath if it exists
+            if (this.config.convertPath) {
+                // get prefix by removing leading slash
+                const prefix = this.config.convertPath!.replace(/^\/+/, "");
+                files = files.filter((file) => !file.startsWith(prefix));
+            }
+
+            // remove prefix before returning result
+            return files.map((file) => file.replace(this.config.prefix, ""));
         } catch (error) {
             throw new ErrorObject(502, error);
         }
