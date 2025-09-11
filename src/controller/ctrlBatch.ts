@@ -1,3 +1,9 @@
+/**
+ * @file Controller for handling batch image processing operations.
+ * This includes transforming and uploading images from a directory or a list of files
+ * and tracking the progress of these batch operations.
+ */
+
 import { ErrorObject } from "@/utils/errorObject.ts";
 import Globals from "@/utils/globals.ts";
 import {
@@ -7,14 +13,21 @@ import {
 } from "@/utils/functions.ts";
 import Silent from "@/utils/silent.ts";
 
+/**
+ * Controller class responsible for managing batch image processing tasks.
+ * It orchestrates the transformation, upload, and progress tracking of multiple images.
+ */
 export default class CtrlBatch {
     /**
      * Helper function to process a list of files, applying transformations and updating progress.
+     * Iterates through each file, applies image transformations, and uploads the result.
+     * Progress and errors are saved to Redis using the provided token.
      * @param {string} token - Unique identifier for tracking the batch processing progress.
      * @param {string} storageName - The name of the storage configuration to use.
      * @param {string[]} files - Array of file paths to process.
      * @param {Record<string, any>} transformations - A JSON object of transformations to apply.
-     * @returns {Promise<{ done: number; pending: number; errors: any[] }>} Current progress state.
+     * @returns {Promise<void>} - A Promise that resolves when all files have been processed.
+     * @private
      */
     private async _processFiles(
         token: string,
@@ -22,36 +35,43 @@ export default class CtrlBatch {
         files: string[],
         transformations: Record<string, any>
     ): Promise<void> {
+        // Initialize progress tracking variables for batch processing
         let done = 0;
         let pending = files.length;
         const errors: any[] = [];
 
-        // save initial progress in redis
+        // Initialize progress tracking in Redis with initial values
         Silent(
             "createBatchProgress",
             Globals.ctrlRedis.saveProgress(token, { done, pending, errors })
         );
 
+        // Process each file in the array sequentially
         for await (const filePath of files) {
             try {
+                // check if extension is present
+                if (!filePath.includes("."))
+                    throw new ErrorObject(400, "File extension is missing");
+
+                // Extract file extension and name from the file path
                 const ext = filePath.split(".").pop() || "";
                 const name = filePath.split("/").pop()?.split(".")[0] || "";
                 const originalName = `${name}.${ext}`;
 
-                if (!ext)
-                    throw new ErrorObject(400, "File extension is missing");
-
+                // Validate and determine image extensions for processing
                 const originalExtension = validateImageExtension(ext)!;
                 const newExtension = validateImageExtension(
                     transformations.format
                 );
 
+                // Generate new filename based on transformation parameters
                 const parsedName = createNameFromParams(
                     name,
                     newExtension || originalExtension,
                     transformations
                 );
 
+                // Process the image with specified transformations and upload
                 await Globals.ctrlImage.processImage(
                     storageName,
                     filePath,
@@ -60,15 +80,17 @@ export default class CtrlBatch {
                     transformations,
                     newExtension || originalExtension
                 );
+                // Update progress counters after successful processing
                 done++;
                 pending--;
                 console.log(`Processed ${done}/${files.length} files`);
             } catch (error: any) {
+                // Handle and log any errors during file processing
                 console.error(`Error processing file ${filePath}:`, error);
                 errors.push({ filePath, error: error.message || error });
                 pending--;
             } finally {
-                // update progress in redis
+                // Update progress tracking in Redis after each file
                 Silent(
                     "updateBatchProgress",
                     Globals.ctrlRedis.saveProgress(token, {
@@ -89,8 +111,10 @@ export default class CtrlBatch {
      * @param {string} token - Unique identifier for tracking the batch processing progress.
      * @param {string} storageName - The name of the storage configuration to use (e.g., 's3_main').
      * @param {string} directoryPath - The directory path within the storage to list files from.
-     * @param {TypeImageConversionParams} transformations - A JSON object of transformations to apply.
+     * @param {Record<string, any>} transformations - A JSON object of transformations to apply.
      * @returns {Promise<void>} This method doesn't return a value directly. Progress can be tracked using the token in Redis.
+     * @throws {ErrorObject} - Throws an ErrorObject if the storage manager is not found, no transformations are provided,
+     * or if listing files from storage fails.
      */
     public async batchTransformAndUpload(
         token: string,
@@ -138,8 +162,10 @@ export default class CtrlBatch {
      * @param {string} token - Unique identifier for tracking the batch processing progress.
      * @param {string} storageName - The name of the storage configuration to use (e.g., 's3_main').
      * @param {string[]} filePaths - An array of file paths to perform operations on.
-     * @param {TypeImageConversionParams} transformations - A JSON object of transformations to apply.
+     * @param {Record<string, any>} transformations - A JSON object of transformations to apply.
      * @returns {Promise<void>} This method doesn't return a value directly. Progress can be tracked using the token in Redis.
+     * @throws {ErrorObject} - Throws an ErrorObject if the storage manager is not found, no transformations are provided,
+     * or if the filePaths array is empty.
      */
     public async batchTransformAndUploadFromList(
         token: string,
