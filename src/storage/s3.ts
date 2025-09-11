@@ -51,6 +51,8 @@ export default class S3Manager {
                 Bucket: this.config.bucket,
                 Key: prefix + key,
                 Body: body,
+                ACL: this.config.acl,
+                CacheControl: "max-age=2592000",
             });
             return await this.client.send(command);
         } catch (error) {

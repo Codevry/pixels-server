@@ -46,5 +46,4 @@ export type TypeS3Acl =
     | "aws-exec-read"
     | "authenticated-read"
     | "bucket-owner-read"
-    | "bucket-owner-full-control"
-    | "log-delivery-write";
+    | "bucket-owner-full-control";
