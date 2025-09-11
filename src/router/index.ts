@@ -15,6 +15,7 @@ import { ENUM_STORAGE_TYPE } from "@/utils/enums.ts";
 import routeImage from "@/router/routeImage.ts";
 import routeBatch from "@/router/routeBatch.ts";
 import { MiddlewareUnhandled } from "@/middleware/middlewareUnhandled.ts"; // New import
+import routeConfig from "@/router/routeConfig.ts";
 
 /**
  * Router class that handles the setup and initialization of the Hono application.
@@ -112,6 +113,7 @@ export default class Router {
         // app routes
         this.app.route("/images", routeImage);
         this.app.route("/batch", routeBatch);
+        this.app.route("/config", routeConfig);
 
         // 404
         this.app.all("*", (c) => {
