@@ -62,14 +62,13 @@ const StorageS3ConfigSchema = z.object({
  * - If `type` is 'ftp' or 'sftp', `ftp` configuration is required.
  * - If `type` is 'local', a ` local ` path is required.
  */
-const StorageConfigSchema = z
-    .object({
-        type: z.nativeEnum(ENUM_STORAGE_TYPE),
-        s3: StorageS3ConfigSchema.optional(),
-        ftp: FtpConfigSchema.optional(),
-        local: z.string().optional(),
-    })
-    .superRefine((data, ctx) => {
+const StorageConfigSchema = z.object({
+    type: z.nativeEnum(ENUM_STORAGE_TYPE),
+    s3: StorageS3ConfigSchema,
+    // ftp: FtpConfigSchema.optional(),
+    // local: z.string().optional(),
+});
+/*.superRefine((data, ctx) => {
         if (!data.s3 && !data.ftp && !data.local) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
@@ -104,7 +103,7 @@ const StorageConfigSchema = z
                 path: ["local"],
             });
         }
-    });
+    });*/
 
 /**
  * Zod schema for the overall TypeStorage, which is a record of string keys
