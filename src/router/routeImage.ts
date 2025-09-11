@@ -1,25 +1,32 @@
 /**
- * @file Image processing route handler
- * Defines routes for handling image transformation requests
- * using the Hono framework and CtrlImage controller.
+ * @file Defines API routes for image processing and retrieval.
+ * This file sets up routes to handle requests for image transformations,
+ * utilizing the `CtrlImage` controller and Hono's middleware for response handling and timeouts.
  */
 
 import { Hono } from "hono"; // Web framework for handling HTTP requests
 import CtrlImage from "@/controller/ctrlImage.ts";
 import { MiddlewareResponse } from "@/middleware/middlewareResponse.ts";
 import { getImageContentType } from "@/utils/functions.ts";
-import { timeout } from "hono/timeout"; // Controller for image processing operations
+import { timeout } from "hono/timeout";
+import Globals from "@/utils/globals.ts"; // Controller for image processing operations
 
 // Initialize Hono router instance
 const route = new Hono();
-// Create instance of image processing controller
-const ctrlImage = new CtrlImage();
 
 /**
- * Route handler for processing image transformations.
- * Accepts storage name and image location as URL parameters,
- * and image transformation operations as query parameters.
- * @route GET /image/:storageName/:imageLocation*
+ * GET /:storage/public/:imagePath{.+}
+ * Route handler for processing and serving image transformations.
+ * This endpoint accepts a storage name and an image path as URL parameters,
+ * and applies image transformation operations based on query parameters.
+ * It uses a timeout to prevent long-running requests.
+ *
+ * @param {object} params - The path parameters.
+ * @param {string} params.storage - The name of the storage configuration where the image is located.
+ * @param {string} params.imagePath - The full path to the image within the specified storage (e.g., 'folder/subfolder/image.jpg').
+ * @param {object} queryParams - Query parameters representing image transformation operations (e.g., `?w=100&h=100&format=png`).
+ * @returns {Response} The processed image as a Buffer with the appropriate Content-Type header.
+ * @throws {ErrorObject} If the image cannot be found, processed, or if parameters are invalid.
  */
 route.get(
     "/:storage/public/:imagePath{.+}",
@@ -43,7 +50,7 @@ route.get(
         }
 
         // get the image & extension
-        const result = await ctrlImage.getImage(
+        const result = await Globals.ctrlImage.getImage(
             location,
             storage!,
             processedQueryParams
