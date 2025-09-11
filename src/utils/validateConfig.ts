@@ -38,7 +38,6 @@ const S3ACLSchema = z.enum([
     "authenticated-read",
     "bucket-owner-read",
     "bucket-owner-full-control",
-    "log-delivery-write",
 ]);
 
 /**
