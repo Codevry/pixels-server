@@ -1,7 +1,7 @@
 /**
- * @file Main router setup and initialization.
- * Handles configuration validation, storage management, database connections,
- * middleware setup, and route definitions.
+ * @file Main router setup and initialization for the Pixels server application.
+ * This file orchestrates the application's startup sequence, including configuration validation,
+ * storage management setup, database connections, middleware registration, and route definitions.
  */
 
 import { Hono } from "hono";
@@ -24,16 +24,24 @@ import routeConfig from "@/router/routeConfig.ts";
  */
 export default class Router {
     private readonly app: Hono;
+
+    /**
+     * Creates an instance of the Router class.
+     * Initializes the Hono application instance.
+     */
     constructor() {
         this.app = new Hono();
     }
 
     /**
-     * Verifies the presence and validity of the config.json file.
-     * Exits the process if the config file is not found or is invalid.
+     * Verifies the presence and validity of the `config.json` file.
+     * This is a critical startup step; if the configuration is invalid or missing,
+     * the process will exit with an error.
      * @private
+     * @async
+     * @returns {Promise<void>} A Promise that resolves if the config is valid, otherwise exits the process.
      */
-    private async verifyConfig() {
+    private async verifyConfig(): Promise<void> {
         console.log("Verifying config.json...");
         try {
             Globals.config = await validateConfig();
@@ -45,21 +53,23 @@ export default class Router {
     }
 
     /**
-     * Initializes storage managers based on the configuration settings.
-     * Creates appropriate storage manager instances (S3Manager, FtpManager) for each configured storage.
-     * Exits the process if the required configuration is missing or a storage type is unsupported.
+     * Initializes storage managers based on the application's configuration settings.
+     * Creates appropriate storage manager instances (S3Manager, FtpManager, SftpManager) for each configured storage.
+     * Establishes connections for FTP/SFTP managers. Exits the process if any required configuration is missing
+     * or a storage type is unsupported/fails to initialize.
      *
-     * Storage types supported:
-     * - S3: Requires s3 configuration object
-     * - FTP: Requires ftp configuration object
-     * - Local: Currently logs a message only (not implemented)
-     * - SFTP: Requires ftp configuration object
+     * Supported storage types:
+     * - S3: Requires `s3` configuration object.
+     * - FTP: Requires `ftp` configuration object.
+     * - SFTP: Requires `ftp` configuration object.
+     * - Local: Currently logs a message only (not fully implemented).
      *
      * @private
      * @async
-     * @throws {Error} Will exit a process with status 1 if storage configuration is invalid
+     * @returns {Promise<void>} A Promise that resolves when all storage managers are initialized and connected.
+     * @throws {Error} Will exit the process with status 1 if storage configuration is invalid or connection fails.
      */
-    private async setStorageManager() {
+    private async setStorageManager(): Promise<void> {
         Globals.storage = {} as Record<string, StorageManager>; // Initialize Globals.storage
         for (const [storageName, storageConfig] of Object.entries(
             Globals.config.storage
@@ -93,18 +103,24 @@ export default class Router {
     }
 
     /**
-     * setup middlewares
+     * Sets up global middlewares for the Hono application.
+     * This includes logging and unhandled error handling middleware.
      * @private
+     * @returns {void}
      */
-    private middlewares() {
+    private middlewares(): void {
         this.app.use(logger());
         this.app.use(MiddlewareUnhandled());
     }
 
     /**
-     * setup routes
+     * Defines and registers all application routes with the Hono application.
+     * This includes ping routes, image processing routes, batch processing routes,
+     * and a fallback 404 route.
+     * @private
+     * @returns {void}
      */
-    private routes() {
+    private routes(): void {
         // ping route
         this.app.on(["GET", "POST"], ["/", "/ping", "/health"], (c) =>
             c.json({ success: true, message: "router is working", version })
@@ -115,7 +131,7 @@ export default class Router {
         this.app.route("/batch", routeBatch);
         this.app.route("/config", routeConfig);
 
-        // 404
+        // 404 fallback route
         this.app.all("*", (c) => {
             c.status(404);
             return c.json({
@@ -126,10 +142,14 @@ export default class Router {
     }
 
     /**
-     * connect to database & services
+     * Establishes connection to the Redis database.
+     * This is a critical startup step; if the Redis connection fails,
+     * the process will exit with an error.
      * @private
+     * @async
+     * @returns {Promise<void>} A Promise that resolves if the database connection is successful, otherwise exits the process.
      */
-    private async database() {
+    private async database(): Promise<void> {
         Globals.dbRedis = new DbRedis();
         await Globals.dbRedis
             .connect()
@@ -141,15 +161,15 @@ export default class Router {
     }
 
     /**
-     * Initializes and configures the application.
-     * Performs the following setup steps in order:
-     * 1. Verifies configuration
-     * 2. Establishes database connection
-     * 3. Sets up storage managers
-     * 4. Configures middlewares
-     * 5. Defines routes
+     * Initializes and configures the entire application.
+     * This method orchestrates the sequence of setup steps:
+     * 1. Verifies application configuration (`config.json`).
+     * 2. Establishes connection to the Redis database.
+     * 3. Sets up and connects all configured storage managers.
+     * 4. Configures global Hono middlewares.
+     * 5. Defines and registers all application routes.
      *
-     * @returns {Promise<Hono>} The configured Hono application instance
+     * @returns {Promise<Hono>} A Promise that resolves with the fully configured Hono application instance.
      */
     async connect(): Promise<Hono> {
         await this.verifyConfig(); // Verify config as the first step
