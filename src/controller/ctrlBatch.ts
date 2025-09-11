@@ -35,8 +35,8 @@ export default class CtrlBatch {
         for await (const filePath of files) {
             try {
                 const ext = filePath.split(".").pop() || "";
-                const originalName =
-                    filePath.split("/").pop()?.split(".")[0] || "";
+                const name = filePath.split("/").pop()?.split(".")[0] || "";
+                const originalName = `${name}.${ext}`;
 
                 if (!ext)
                     throw new ErrorObject(400, "File extension is missing");
@@ -47,7 +47,7 @@ export default class CtrlBatch {
                 );
 
                 const parsedName = createNameFromParams(
-                    originalName,
+                    name,
                     newExtension || originalExtension,
                     transformations
                 );
@@ -55,6 +55,7 @@ export default class CtrlBatch {
                 await Globals.ctrlImage.processImage(
                     storageName,
                     filePath,
+                    originalName,
                     parsedName,
                     transformations,
                     newExtension || originalExtension

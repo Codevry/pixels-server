@@ -80,6 +80,7 @@ export default class CtrlImage {
      * Processes an image by converting it according to specified operations and storing the result.
      * @param {string} storage - The storage identifier where the image is located.
      * @param {string} originalPath - The original image path
+     * @param originalName
      * @param {string} parsedName - The new name for the processed image.
      * @param {Partial<TypeImageConversionParams>} operations - Image processing operations to be applied.
      * @param {keyof FormatEnum} newExtension - The target file extension.
@@ -88,6 +89,7 @@ export default class CtrlImage {
     async processImage(
         storage: string,
         originalPath: string,
+        originalName: string,
         parsedName: string,
         operations: Partial<TypeImageConversionParams>,
         newExtension: keyof FormatEnum
@@ -108,7 +110,10 @@ export default class CtrlImage {
         // save it in storage
         Silent(
             "saveImageConverted",
-            Globals.storage[storage]?.uploadFile(parsedName, converted)
+            Globals.storage[storage]?.uploadFile(
+                originalPath.replace(originalName, parsedName),
+                converted
+            )
         );
 
         // return converted image
@@ -132,6 +137,7 @@ export default class CtrlImage {
         // Extract file extension and base name from the path
         const ext = imagePath.split(".").pop() || "";
         const name = imagePath.split("/").pop()?.split(".")[0] || "";
+        const originalName = `${name}.${ext}`;
 
         // if extension is empty
         if (!ext) throw new ErrorObject(400, "File extension is missing");
@@ -148,7 +154,7 @@ export default class CtrlImage {
         const originalExtension = validateImageExtension(ext)!;
 
         // get new / unique name (for conversion - will remain same if no params)
-        const newName = createNameFromParams(
+        const parsedName = createNameFromParams(
             name,
             newExtension || originalExtension,
             queryParams
@@ -157,7 +163,7 @@ export default class CtrlImage {
         // if available then readFile & return
         return new Promise((resolve, reject) => {
             // get image from storage (with params)
-            Globals.storage[storageName]!.readFile(newName)
+            Globals.storage[storageName]!.readFile(parsedName)
                 .then((image) =>
                     resolve({
                         image,
@@ -172,7 +178,8 @@ export default class CtrlImage {
                             this.processImage(
                                 storageName,
                                 imagePath,
-                                newName,
+                                originalName,
+                                parsedName,
                                 validatedParams,
                                 newExtension || originalExtension
                             )
