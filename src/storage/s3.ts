@@ -199,4 +199,30 @@ export default class S3Manager {
             throw new ErrorObject(502, error);
         }
     }*/
+
+    /**
+     * Checks if the S3 credentials are valid by attempting to list objects in the bucket.
+     * @returns {Promise<boolean>} True if credentials are valid, false otherwise.
+     * @throws {ErrorObject} Throws if there's an unexpected error during credential check.
+     */
+    public async checkCredentials(): Promise<boolean> {
+        try {
+            const command = new ListObjectsV2Command({
+                Bucket: this.config.bucket,
+                MaxKeys: 1, // Only need to check if we can access, not list all objects
+            });
+            await this.client.send(command);
+            return true;
+        } catch (error) {
+            // Handle specific S3 errors for invalid credentials or access denied
+            if (
+                error instanceof Error &&
+                (error.name === "AccessDenied" ||
+                    error.name === "InvalidAccessKeyId" ||
+                    error.name === "SignatureDoesNotMatch")
+            )
+                throw new ErrorObject(401, "Invalid S3 credentials");
+            else throw new ErrorObject(502, error);
+        }
+    }
 }
