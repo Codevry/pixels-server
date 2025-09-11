@@ -1,0 +1,26 @@
+#### Architecture Overview
+- Entry: `src/index.ts` starts the Hono app on port 4141 (configurable at build/deploy level) and connects router.
+- Router: `src/router/index.ts` orchestrates
+    - Config validation (reads `config.json`)
+    - Redis connection (`services/dbRedis.ts`)
+    - Storage setup (`storage/storageManager.ts` with S3/FTP/SFTP/LOCAL)
+    - Global middleware: logger, unhandled error handler
+    - Routes registration
+- Controllers
+    - `CtrlImage` handles single-image flow (read, transform via `SharpManager`, save, return)
+    - `CtrlBatch` handles directory/list batch operations and progress updates
+    - `CtrlConfig` config related handling, validates storage credentials
+    - `CtrlRedis` thin wrapper for high-level handling of references/progress with Redis
+- Services
+    - `SharpManager`: typed, chainable wrapper around `sharp`
+    - Storage managers: `S3Manager`, `FtpClientManager`, `SftpClientManager`
+    - `DbRedis`: connection and helpers for Redis
+- Utilities
+    - `validateConfig.ts`: zod-based `config.json` validator
+    - `functions.ts`: helpers – query parsing/validation, content-type mapping, S3 path sanitizing, etc.
+    - `extras.ts`: parameter and format maps
+- Middlewares
+  - `middlewareResponse` - standardized response wrapper
+  - `middlewareUnhandled` - catching all unhandled errors
+
+---
