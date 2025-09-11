@@ -23,6 +23,7 @@ export type TypeStorageS3Config = {
     prefix: string;
     region: string;
     convertPath?: string;
+    acl: TypeS3Acl;
 };
 
 // ftp storage
@@ -36,3 +37,14 @@ export type TypeFtpConfig = {
     remoteDir?: string;
     cachePath?: string;
 };
+
+// s3 acl
+export type TypeS3Acl =
+    | "private"
+    | "public-read"
+    | "public-read-write"
+    | "aws-exec-read"
+    | "authenticated-read"
+    | "bucket-owner-read"
+    | "bucket-owner-full-control"
+    | "log-delivery-write";
