@@ -12,7 +12,7 @@ import {
 } from "@aws-sdk/client-s3";
 import type { TypeStorageS3Config } from "@/types/typeStorage.ts";
 import { ErrorObject } from "@/utils/errorObject.ts";
-import { sanitizeS3Path } from "@/utils/functions.ts";
+import { sanitizeS3Path, getImageContentType } from "@/utils/functions.ts";
 
 export default class S3Manager {
     private readonly client: S3Client;
@@ -47,12 +47,14 @@ export default class S3Manager {
     ): Promise<PutObjectCommandOutput> {
         try {
             const prefix = this.config.convertPath || this.config.prefix;
+            const extension = key.split(".").pop() || "";
             const command = new PutObjectCommand({
                 Bucket: this.config.bucket,
                 Key: prefix + key,
                 Body: body,
                 ACL: this.config.acl,
                 CacheControl: "max-age=2592000",
+                ContentType: getImageContentType(extension),
             });
             return await this.client.send(command);
         } catch (error) {
