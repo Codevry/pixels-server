@@ -34,6 +34,12 @@ interface StorageManagerInterface {
      * @returns {Promise<string[]>} Array of file keys (paths)
      */
     listFiles(directoryPath: string): Promise<string[]>;
+
+    /**
+     * Checks if the storage credentials are valid.
+     * @returns {Promise<boolean>} True if credentials are valid, false otherwise.
+     */
+    checkCredentials(): Promise<boolean>;
 }
 
 /**
@@ -160,6 +166,21 @@ export class StorageManager implements StorageManagerInterface {
      * @param {boolean} fromCache - Whether to also remove from cache
      * @returns {Promise<any>} Result of the delete operation
      */
+    /**
+     * Checks if the storage credentials are valid.
+     * @returns {Promise<boolean>} True if credentials are valid, false otherwise.
+     * @throws {ErrorObject} Throws if the operation is not supported for the storage type or fails.
+     */
+    public async checkCredentials(): Promise<boolean> {
+        if (this.type === ENUM_STORAGE_TYPE.s3) {
+            return (this.activeManager as S3Manager).checkCredentials();
+        }
+        throw new ErrorObject(
+            502,
+            "Check credentials operation not supported for this storage type."
+        );
+    }
+
     /* public async deleteFile(key: string, fromCache: boolean): Promise<any> {
         return this.activeManager.deleteFile(key, fromCache);
     }*/
