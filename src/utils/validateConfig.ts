@@ -30,6 +30,21 @@ const FtpConfigSchema = z.object({
  * Zod schema for S3 storage configuration.
  * Defines the expected properties and their types for S3 bucket details.
  */
+const S3ACLSchema = z.enum([
+    "private",
+    "public-read",
+    "public-read-write",
+    "aws-exec-read",
+    "authenticated-read",
+    "bucket-owner-read",
+    "bucket-owner-full-control",
+    "log-delivery-write",
+]);
+
+/**
+ * Zod schema for S3 storage configuration.
+ * Defines the expected properties and their types for S3 bucket details.
+ */
 const StorageS3ConfigSchema = z.object({
     bucket: z.string(),
     endpoint: z.string(),
@@ -38,6 +53,7 @@ const StorageS3ConfigSchema = z.object({
     prefix: z.string(),
     region: z.string(),
     convertPath: z.string().optional(),
+    acl: S3ACLSchema,
 });
 
 /**
