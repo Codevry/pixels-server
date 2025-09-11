@@ -6,7 +6,7 @@
   "private": true,
   "scripts": {
     "dev": "bun --hot src/index.ts",
-    "test": "bun run src/tests"
+    "start": "bun src/index.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.879.0",
